@@ -1,29 +1,67 @@
+# =====================
 # Python
+# =====================
+
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
 
-# Virtualenv
+# =====================
+# Virtual environments
+# =====================
+
 .venv/
 venv/
 env/
+ENV/
 
+# =====================
 # Django
+# =====================
+
 db.sqlite3
 *.log
 staticfiles/
+media/
 
-# PyCharm
-.idea/
-
-# macOS
-.DS_Store
-
-# migrations cache
-*/migrations/__pycache__/
-
-# test logs
-collector/test_log.txt
+# =====================
+# GeoIP database
+# =====================
 
 data/*.mmdb
+
+# =====================
+# PyCharm / IDE
+# =====================
+
+.idea/
+.vscode/
+
+# =====================
+# macOS
+# =====================
+
+.DS_Store
+
+# =====================
+# Python packaging
+# =====================
+
+build/
+dist/
+*.egg-info/
+
+# =====================
+# migrations cache
+# =====================
+
+*/migrations/__pycache__/
+
+# =====================
+# test / debug files
+# =====================
+
+collector/test_log.txt
+*.pid
