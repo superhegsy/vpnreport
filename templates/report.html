@@ -20,7 +20,7 @@
 <tr>
 <td>{{ session.username }}</td>
 <td>{{ session.remote_ip }}</td>
-<td>{{ session.connected_at }}</td>
+<td>{{ session.connected_at|date:"Y.m.d H:i:s" }}</td>
 </tr>
 {% endfor %}
 
