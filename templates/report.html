@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>VPN Report</title>
+</head>
+
+<body>
+
+<h1>VPN kapcsolati jelentés</h1>
+
+<table border="1">
+<tr>
+<<th>Felhasználó</th>
+<th>IP cím</th>
+<th>Kapcsolódás ideje</th>
+</tr>
+
+{% for session in sessions %}
+<tr>
+<td>{{ session.username }}</td>
+<td>{{ session.remote_ip }}</td>
+<td>{{ session.connected_at }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

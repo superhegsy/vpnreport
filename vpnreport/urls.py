@@ -16,7 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from vpn.views import dashboard, report_daily, report_weekly, report_monthly
+from vpn.views import vpn_locations
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', dashboard),
+
+    path('report/daily/', report_daily),
+    path('report/weekly/', report_weekly),
+    path('report/monthly/', report_monthly),
+    path('api/vpn-locations/', vpn_locations),
 ]

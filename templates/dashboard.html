@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="utf-8">
+<title>JGK VPN Dashboard</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#d9d9d9;
+}
+
+/* felső menü */
+
+.topnav{
+background:#e6e6e6;
+padding:10px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+font-weight:bold;
+font-size:18px;
+}
+
+.menu a{
+margin-left:10px;
+padding:6px 14px;
+background:#ddd;
+border-radius:20px;
+text-decoration:none;
+color:black;
+font-size:14px;
+}
+
+/* branding sáv */
+
+.brandbar{
+height:35px;
+background:#4ea67d;
+position:relative;
+}
+
+.brandbar:after{
+content:"";
+position:absolute;
+right:0;
+width:120px;
+height:35px;
+background:#d7a300;
+}
+
+/* dashboard container */
+
+.container{
+padding:20px;
+}
+
+/* stat kártyák */
+
+.stats{
+display:flex;
+gap:20px;
+margin-bottom:20px;
+}
+
+.stat{
+flex:1;
+background:#1f2b3c;
+color:white;
+padding:20px;
+border-radius:6px;
+text-align:center;
+}
+
+/* panel */
+
+.panel{
+background:#1f2b3c;
+color:white;
+padding:20px;
+border-radius:6px;
+margin-bottom:20px;
+}
+
+/* grafikon layout */
+
+.row{
+display:flex;
+gap:20px;
+margin-bottom:20px;
+}
+
+.col{
+flex:1;
+}
+
+/* térkép */
+
+#map{
+height:350px;
+}
+
+/* table */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+color:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #3a4a5e;
+}
+
+th{
+text-align:left;
+}
+
+/* footer */
+
+.footer{
+background:#4ea67d;
+color:white;
+text-align:center;
+padding:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="topnav">
+
+<div class="logo">JGK</div>
+
+<div class="menu">
+<a href="/">Dashboard</a>
+<a href="/report/daily/">Napi riport</a>
+<a href="/report/weekly/">Heti riport</a>
+<a href="/report/monthly/">Havi riport</a>
+</div>
+
+</div>
+
+<div class="brandbar"></div>
+
+<div class="container">
+
+<h2>VPN Dashboard</h2>
+
+<!-- STAT KÁRTYÁK -->
+
+<div class="stats">
+
+<div class="stat">
+<h3>Aktív VPN user</h3>
+<h1>{{ active_users }}</h1>
+</div>
+
+<div class="stat">
+<h3>Mai VPN session</h3>
+<h1>{{ today_sessions }}</h1>
+</div>
+
+<div class="stat">
+<h3>Összes VPN session</h3>
+<h1>{{ total_sessions }}</h1>
+</div>
+
+<div class="stat">
+<h3>Top VPN user</h3>
+<h1>
+{% if top_user %}
+{{ top_user.username }}
+{% else %}
+-
+{% endif %}
+</h1>
+</div>
+
+</div>
+
+
+<!-- TÉRKÉP + GRAFIKON -->
+
+<div class="row">
+
+<div class="col panel">
+
+<h4>VPN kapcsolatok világtérképen</h4>
+
+<div id="map"></div>
+
+</div>
+
+<div class="col panel">
+
+<h4>VPN kapcsolatok ország szerint</h4>
+
+<canvas id="countryChart"></canvas>
+
+</div>
+
+</div>
+
+
+<!-- SESSION TÁBLA -->
+
+<div class="panel">
+
+<h4>Legutóbbi VPN kapcsolatok</h4>
+
+<table>
+
+<tr>
+<th>Felhasználó</th>
+<th>Külső IP</th>
+<th>Kapcsolódás ideje</th>
+</tr>
+
+{% for s in sessions %}
+<tr>
+<td>{{ s.username }}</td>
+<td>{{ s.remote_ip }}</td>
+<td>{{ s.connected_at|date:"Y.m.d H:i:s" }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+<div class="footer">
+Józsefvárosi Gazdálkodási Központ Zrt. – Megbízható szolgáltatás
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+// =====================
+// TÉRKÉP
+// =====================
+
+var map = L.map('map').setView([47.4979, 19.0402], 3)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:18
+}).addTo(map)
+
+fetch("/api/vpn-locations/")
+.then(response => response.json())
+.then(data => {
+
+data.forEach(function(session){
+
+L.marker([session.lat, session.lon])
+.addTo(map)
+.bindPopup(
+"User: " + session.username +
+"<br>IP: " + session.ip +
+"<br>Country: " + session.country
+)
+
+})
+
+})
+
+
+// =====================
+// ORSZÁG GRAFIKON
+// =====================
+
+var ctx = document.getElementById("countryChart");
+
+if(ctx){
+
+var countryLabels = [];
+var countryData = [];
+
+{% for c in country_stats %}
+countryLabels.push("{{ c.country }}");
+countryData.push({{ c.total }});
+{% endfor %}
+
+new Chart(ctx, {
+type: "bar",
+data: {
+labels: countryLabels,
+datasets: [{
+label: "VPN session",
+data: countryData
+}]
+},
+options:{
+responsive:true,
+plugins:{
+legend:{display:false}
+}
+}
+});
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
