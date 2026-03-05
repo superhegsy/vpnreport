@@ -19,18 +19,28 @@ from .models import VPNSession
 
 def dashboard(request):
 
+    # legutóbbi sessionök
     sessions = VPNSession.objects.all().order_by("-connected_at")[:20]
 
+    # aktív session lista
+    active_sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    ).order_by("-connected_at")
+
+    # aktív user szám
     active_users = VPNSession.objects.filter(
         disconnected_at__isnull=True
     ).count()
 
+    # mai sessionök
     today_sessions = VPNSession.objects.filter(
         connected_at__date=timezone.now().date()
     ).count()
 
+    # összes session
     total_sessions = VPNSession.objects.count()
 
+    # top userek
     top_users = (
         VPNSession.objects
         .values("username")
@@ -40,6 +50,7 @@ def dashboard(request):
 
     top_user = top_users.first()
 
+    # napi statisztika
     daily_stats = (
         VPNSession.objects
         .annotate(day=TruncDate("connected_at"))
@@ -48,9 +59,10 @@ def dashboard(request):
         .order_by("day")
     )
 
-    # 🌍 ország statisztika (grafikonhoz)
+    # ország statisztika (grafikonhoz)
     country_stats = (
         VPNSession.objects
+        .exclude(country__isnull=True)
         .values("country")
         .annotate(total=Count("id"))
         .order_by("-total")[:10]
@@ -58,13 +70,14 @@ def dashboard(request):
 
     context = {
         "sessions": sessions,
+        "active_sessions": active_sessions,
         "active_users": active_users,
         "today_sessions": today_sessions,
         "total_sessions": total_sessions,
         "top_user": top_user,
         "top_users": top_users,
         "daily_stats": daily_stats,
-        "country_stats": country_stats
+        "country_stats": list(country_stats)
     }
 
     return render(request, "dashboard.html", context)
@@ -143,13 +156,47 @@ def vpn_locations(request):
     data = []
 
     for s in sessions:
-
         data.append({
             "username": s.username,
             "ip": s.remote_ip,
             "lat": s.latitude,
             "lon": s.longitude,
-            "country": s.country
+            "country": s.country,
+            "country_code": s.country_code
         })
 
     return JsonResponse(data, safe=False)
+
+# =========================
+# LIVE DASHBOARD API
+# =========================
+
+def dashboard_stats(request):
+
+    active_users = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    ).count()
+
+    today_sessions = VPNSession.objects.filter(
+        connected_at__date=timezone.now().date()
+    ).count()
+
+    total_sessions = VPNSession.objects.count()
+
+    top_user = (
+        VPNSession.objects
+        .values("username")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+        .first()
+    )
+
+    data = {
+        "active_users": active_users,
+        "today_sessions": today_sessions,
+        "total_sessions": total_sessions,
+        "top_user": top_user["username"] if top_user else "-"
+    }
+
+    return JsonResponse(data)
+

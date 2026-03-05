@@ -25,3 +25,5 @@ staticfiles/
 
 # test logs
 collector/test_log.txt
+
+data/*.mmdb

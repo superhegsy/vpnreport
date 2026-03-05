@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from vpn.views import dashboard, report_daily, report_weekly, report_monthly
 from vpn.views import vpn_locations
+from vpn.views import dashboard_stats
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,4 +28,5 @@ urlpatterns = [
     path('report/weekly/', report_weekly),
     path('report/monthly/', report_monthly),
     path('api/vpn-locations/', vpn_locations),
+    path('api/dashboard-stats/', dashboard_stats),
 ]

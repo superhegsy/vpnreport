@@ -4,16 +4,51 @@ import re
 import geoip2.database
 from django.utils import timezone
 
-# Django init
+# =========================
+# COUNTRY TRANSLATION
+# =========================
+
+COUNTRY_HU = {
+    "Italy": "Olaszország",
+    "Germany": "Németország",
+    "Hungary": "Magyarország",
+    "United States": "Egyesült Államok",
+    "United Kingdom": "Egyesült Királyság",
+    "France": "Franciaország",
+    "Spain": "Spanyolország",
+    "Netherlands": "Hollandia",
+    "Austria": "Ausztria",
+    "Switzerland": "Svájc",
+    "Poland": "Lengyelország",
+    "Romania": "Románia",
+    "Slovakia": "Szlovákia",
+    "Czechia": "Csehország",
+    "China": "Kína",
+    "Japan": "Japán",
+    "Canada": "Kanada",
+    "Australia": "Ausztrália"
+}
+
+# =========================
+# DJANGO INIT
+# =========================
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vpnreport.settings")
 django.setup()
 
 from vpn.models import VPNSession
 
 
-# GeoIP adatbázis
+# =========================
+# GEOIP DATABASE
+# =========================
+
 reader = geoip2.database.Reader("data/GeoLite2-City.mmdb")
 
+
+# =========================
+# LOG PARSER
+# =========================
 
 def parse_log(line):
 
@@ -28,22 +63,35 @@ def parse_log(line):
     remote_ip = ip_match.group(1)
     action = action_match.group(1)
 
-    # GeoIP lookup
+    # =========================
+    # GEOIP LOOKUP
+    # =========================
+
+    country = None
+    country_code = None
+    lat = None
+    lon = None
+
     try:
         response = reader.city(remote_ip)
 
-        country = response.country.name
+        country_en = response.country.name
+        country = COUNTRY_HU.get(country_en, country_en)
+
+        country_code = response.country.iso_code
+
         lat = response.location.latitude
         lon = response.location.longitude
 
     except Exception:
-        country = None
-        lat = None
-        lon = None
+        pass
 
     now = timezone.now()
 
-    # VPN kapcsolat létrejött
+    # =========================
+    # VPN CONNECT
+    # =========================
+
     if action == "ipsec-up":
 
         VPNSession.objects.create(
@@ -51,14 +99,18 @@ def parse_log(line):
             remote_ip=remote_ip,
             connected_at=now,
             country=country,
+            country_code=country_code,
             latitude=lat,
             longitude=lon
         )
 
         print(f"VPN UP {username} {remote_ip} {country}")
 
-    # VPN bontás
-    if action == "ipsec-down":
+    # =========================
+    # VPN DISCONNECT
+    # =========================
+
+    elif action == "ipsec-down":
 
         session = VPNSession.objects.filter(
             username=username,
