@@ -1,30 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>VPN Report</title>
-</head>
+{% extends "base.html" %}
+{% load static %}
+{% load duration %}
 
-<body>
+{% block content %}
 
-<h1>VPN kapcsolati jelentés</h1>
+<h2>{{ title }}</h2>
 
-<table border="1">
+<div class="panel">
+
+<table>
+
 <tr>
-<<th>Felhasználó</th>
-<th>IP cím</th>
-<th>Kapcsolódás ideje</th>
+<th>Felhasználó</th>
+<th>Session</th>
+<th>Összes VPN idő</th>
 </tr>
 
-{% for session in sessions %}
+{% for u in users %}
+
 <tr>
-<td>{{ session.username }}</td>
-<td>{{ session.remote_ip }}</td>
-<td>{{ session.connected_at|date:"Y.m.d H:i:s" }}</td>
+
+<td>
+<a href="/report/user/{{ u.username }}/">
+{{ u.username }}
+</a>
+</td>
+
+<td>
+{{ u.total_sessions }}
+</td>
+
+<td>
+{{ u.total_duration|duration_format }}
+</td>
+
 </tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3" style="text-align:center;padding:20px;">
+Nincs adat
+</td>
+</tr>
+
 {% endfor %}
 
 </table>
 
-</body>
-</html>
+</div>
+
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% load duration %}
+
+{% block content %}
+
+<h2>{{ username }} VPN history</h2>
+
+<div class="panel">
+
+<table>
+
+<tr>
+<th>Kapcsolódott</th>
+<th>Lecsatlakozott</th>
+<th>IP cím</th>
+<th>Ország</th>
+<th>Duration</th>
+</tr>
+
+{% for s in sessions %}
+
+<tr>
+
+<td>{{ s.connected_at|date:"Y.m.d H:i:s" }}</td>
+
+<td>{{ s.disconnected_at|date:"Y.m.d H:i:s" }}</td>
+
+<td>
+<span class="ip-flag" data-code="{{ s.country_code }}"></span>
+{{ s.remote_ip }}
+</td>
+
+<td>{{ s.country }}</td>
+
+<td>{{ s.duration_seconds|duration_format }}</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" style="text-align:center;padding:20px;">
+Nincs adat
+</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+
+<div class="pagination">
+
+{% if sessions.has_previous %}
+<a href="?page={{ sessions.previous_page_number }}">◀ Előző</a>
+{% endif %}
+
+<span style="padding:10px;">
+Oldal {{ sessions.number }} / {{ sessions.paginator.num_pages }}
+</span>
+
+{% if sessions.has_next %}
+<a href="?page={{ sessions.next_page_number }}">Következő ▶</a>
+{% endif %}
+
+</div>
+
+{% endblock %}

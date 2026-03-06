@@ -179,3 +179,118 @@ def active_vpn_sessions(request):
         })
 
     return JsonResponse(data, safe=False)
+
+from datetime import timedelta
+from django.core.paginator import Paginator
+from django.db.models import Sum
+
+
+# =========================
+# DAILY REPORT
+# =========================
+
+def report_daily(request):
+
+    today = timezone.now().date()
+
+    sessions = VPNSession.objects.filter(
+        connected_at__date=today,
+        disconnected_at__isnull=False
+    )
+
+    users = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    return render(request, "report.html", {
+        "users": users,
+        "title": "Napi VPN riport"
+    })
+
+
+# =========================
+# WEEKLY REPORT
+# =========================
+
+def report_weekly(request):
+
+    start = timezone.now() - timedelta(days=7)
+
+    sessions = VPNSession.objects.filter(
+        connected_at__gte=start,
+        disconnected_at__isnull=False
+    )
+
+    users = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    return render(request, "report.html", {
+        "users": users,
+        "title": "Heti VPN riport"
+    })
+
+
+# =========================
+# MONTHLY REPORT
+# =========================
+
+def report_monthly(request):
+
+    start = timezone.now() - timedelta(days=30)
+
+    sessions = VPNSession.objects.filter(
+        connected_at__gte=start,
+        disconnected_at__isnull=False
+    )
+
+    users = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    return render(request, "report.html", {
+        "users": users,
+        "title": "Havi VPN riport"
+    })
+
+
+# =========================
+# USER HISTORY
+# =========================
+
+def user_history(request, username):
+
+    sessions = VPNSession.objects.filter(
+        username=username,
+        disconnected_at__isnull=False
+    ).order_by("-connected_at")
+
+    paginator = Paginator(sessions, 50)
+
+    page_number = request.GET.get("page")
+
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "user_history.html", {
+        "username": username,
+        "sessions": page_obj
+    })
+

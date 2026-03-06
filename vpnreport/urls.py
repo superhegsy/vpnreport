@@ -24,12 +24,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('', views.dashboard),
-
+# REPORT PAGES
     path('report/daily/', views.report_daily),
     path('report/weekly/', views.report_weekly),
     path('report/monthly/', views.report_monthly),
-
+# USER HISTORY
+    path("report/user/<str:username>/", views.user_history),
     path('api/vpn-locations/', views.vpn_locations),
     path('api/dashboard-stats/', views.dashboard_stats),
     path('api/active-vpn/', views.active_vpn_sessions),
+
 ]

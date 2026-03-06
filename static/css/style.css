@@ -1,32 +1,39 @@
 body{
 margin:0;
 font-family:Arial;
-background:#d9d9d9;
+background:#ffffff; /* oldal háttér fehér */
+color:#000;
 }
 
 /* felso menu */
 
 .topnav{
-background:#e6e6e6;
+background:#ffffff;
 padding:10px 20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .logo{
 font-weight:bold;
 font-size:18px;
+color:#000;
 }
 
 .menu a{
 margin-left:10px;
 padding:6px 14px;
-background:#ddd;
+background:#4ea67d;
 border-radius:20px;
 text-decoration:none;
-color:black;
+color:white;
 font-size:14px;
+}
+
+.menu a:hover{
+background:#3d8f69;
 }
 
 /* branding sav */
@@ -62,21 +69,23 @@ margin-bottom:20px;
 
 .stat{
 flex:1;
-background:#1f2b3c;
-color:white;
+background:#f4c300; /* JGK sárga stat box */
+color:#000;
 padding:20px;
-border-radius:6px;
+border-radius:8px;
 text-align:center;
+box-shadow:0 2px 6px rgba(0,0,0,0.15);
 }
 
 /* panel */
 
 .panel{
-background:#1f2b3c;
-color:white;
+background:#ffffff;
+color:#000;
 padding:20px;
-border-radius:6px;
+border-radius:8px;
 margin-bottom:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 /* grafikon layout */
@@ -95,6 +104,7 @@ flex:1;
 
 #map{
 height:350px;
+border-radius:8px;
 }
 
 /* table */
@@ -103,16 +113,24 @@ table{
 width:100%;
 border-collapse:collapse;
 margin-top:10px;
-color:white;
+color:#000;
 }
 
 th,td{
 padding:10px;
-border-bottom:1px solid #3a4a5e;
+border-bottom:1px solid #ddd;
 }
 
 th{
 text-align:left;
+background:#4ea67d;
+color:white;
+}
+
+/* zebra sorok */
+
+tr:nth-child(even){
+background:#f7f7f7;
 }
 
 /* footer */
@@ -122,4 +140,16 @@ background:#4ea67d;
 color:white;
 text-align:center;
 padding:10px;
+}
+
+/* linkek a tablaban */
+
+table a{
+color:#1565c0;
+text-decoration:none;
+font-weight:500;
+}
+
+table a:hover{
+color:#2e7d32;
 }
