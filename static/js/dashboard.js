@@ -1,5 +1,5 @@
 // =====================
-// HQ KOORDINÁTÁK
+// HQ KOORDINÁTÁK (Budapest)
 // =====================
 
 const HQ = [47.4979, 19.0402];
@@ -22,10 +22,10 @@ function getFlagEmoji(countryCode){
 
 
 // =====================
-// TÉRKÉP
+// TÉRKÉP (Magyarország fókusz)
 // =====================
 
-var map = L.map('map').setView(HQ, 3);
+var map = L.map('map').setView(HQ, 7);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:18
@@ -60,9 +60,9 @@ fetch("/api/vpn-locations/")
         L.marker(userLocation)
         .addTo(map)
         .bindPopup(
-            "User: " + session.username +
+            "<b>" + session.username + "</b>" +
             "<br>IP: " + session.ip +
-            "<br>Country: " + flag + " " + session.country
+            "<br>Ország: " + flag + " " + session.country
         )
 
 
@@ -76,56 +76,21 @@ fetch("/api/vpn-locations/")
         }).addTo(map)
 
 
-        // VILLANÓ JELZÉS
+        // rövid villanás effekt
 
         var circle = L.circle(userLocation, {
-            radius: 50000,
+            radius: 30000,
             color: "#d7a300",
             fillOpacity: 0.3
         }).addTo(map)
 
         setTimeout(function(){
             map.removeLayer(circle)
-        }, 3000)
+        }, 2000)
 
     })
 
 })
-
-
-// =====================
-// ORSZÁG GRAFIKON
-// =====================
-
-var ctx = document.getElementById("countryChart")
-
-if(ctx && typeof countryStats !== "undefined"){
-
-    var countryLabels = []
-    var countryData = []
-
-    countryStats.forEach(function(c){
-
-        countryLabels.push(c.country)
-        countryData.push(c.total)
-
-    })
-
-    new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: countryLabels,
-            datasets: [{
-                label: "VPN session",
-                data: countryData
-            }]
-        },
-        options:{
-            responsive:true
-        }
-    })
-
-}
 
 
 // =====================
@@ -158,7 +123,7 @@ setInterval(updateDashboard, 5000)
 
 
 // =====================
-// ZÁSZLÓ AZ IP ELŐTT A TÁBLÁBAN
+// ZÁSZLÓ AZ IP ELŐTT
 // =====================
 
 document.querySelectorAll(".ip-flag").forEach(function(el){

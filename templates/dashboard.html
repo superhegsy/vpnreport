@@ -36,23 +36,11 @@
 </div>
 
 
-<div class="row">
+<div class="panel">
 
-<div class="col panel">
+<h4>VPN kapcsolatok térképen</h4>
 
-<h4>VPN kapcsolatok világtérképen</h4>
-
-<div id="map"></div>
-
-</div>
-
-<div class="col panel">
-
-<h4>VPN kapcsolatok ország szerint</h4>
-
-<canvas id="countryChart"></canvas>
-
-</div>
+<div id="map" style="height:650px;"></div>
 
 </div>
 
@@ -88,10 +76,6 @@
 
 </div>
 
-
-<script>
-var countryStats = {{ country_stats|safe }};
-</script>
 
 <script src="{% static 'js/dashboard.js' %}"></script>
 
