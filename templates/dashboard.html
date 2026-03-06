@@ -47,14 +47,15 @@
 
 <div class="panel">
 
-<h4>Legutóbbi VPN kapcsolatok</h4>
+<h4>Aktív VPN kapcsolatok</h4>
 
 <table>
 
 <tr>
 <th>Felhasználó</th>
 <th>Külső IP</th>
-<th>Kapcsolódás ideje</th>
+<th>Kapcsolódott</th>
+<th>Duration</th>
 </tr>
 
 {% for s in sessions %}
@@ -69,13 +70,26 @@
 
 <td>{{ s.connected_at|date:"Y.m.d H:i:s" }}</td>
 
+<td class="duration" data-start="{{ s.connected_at|date:'c' }}">
+{{ s.duration }}
+</td>
+
 </tr>
+{% empty %}
+
+<tr>
+<td colspan="4" style="text-align:center; padding:20px;">
+Nincs aktív VPN kapcsolat
+</td>
+</tr>
+
 {% endfor %}
 
 </table>
 
 </div>
 
+<div id="vpn-toast-container"></div>
 
 <script src="{% static 'js/dashboard.js' %}"></script>
 

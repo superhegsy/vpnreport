@@ -1,8 +1,9 @@
 // =====================
-// HQ KOORDINÁTÁK (Budapest)
+// HQ KOORDINÁTÁK
 // =====================
 
-const HQ = [47.4979, 19.0402];
+const HQ = [47.4979, 19.0402]; // Budapest
+
 
 
 // =====================
@@ -21,22 +22,25 @@ function getFlagEmoji(countryCode){
 }
 
 
+
 // =====================
-// TÉRKÉP (Magyarország fókusz)
+// TÉRKÉP
 // =====================
 
 var map = L.map('map').setView(HQ, 7);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     maxZoom:18
-}).addTo(map);
+}).addTo(map)
+
 
 
 // HQ marker
 
 L.marker(HQ)
 .addTo(map)
-.bindPopup("VPN Gateway (HQ)");
+.bindPopup("VPN Gateway (Budapest HQ)")
+
 
 
 // =====================
@@ -55,6 +59,7 @@ fetch("/api/vpn-locations/")
 
         var flag = getFlagEmoji(session.country_code)
 
+
         // USER MARKER
 
         L.marker(userLocation)
@@ -62,7 +67,7 @@ fetch("/api/vpn-locations/")
         .bindPopup(
             "<b>" + session.username + "</b>" +
             "<br>IP: " + session.ip +
-            "<br>Ország: " + flag + " " + session.country
+            "<br>" + flag + " " + session.country
         )
 
 
@@ -91,6 +96,7 @@ fetch("/api/vpn-locations/")
     })
 
 })
+
 
 
 // =====================
@@ -122,6 +128,7 @@ function updateDashboard(){
 setInterval(updateDashboard, 5000)
 
 
+
 // =====================
 // ZÁSZLÓ AZ IP ELŐTT
 // =====================
@@ -135,3 +142,114 @@ document.querySelectorAll(".ip-flag").forEach(function(el){
     }
 
 })
+
+// =====================
+// AUTO REFRESH VPN TABLE
+// =====================
+
+async function refreshVPNSessions(){
+
+    try{
+
+        const response = await fetch("/api/active-vpn/")
+        const data = await response.json()
+
+        const table = document.querySelector("#vpn-table")
+
+        if(!table) return
+
+        let html = `
+        <tr>
+        <th>Felhasználó</th>
+        <th>Külső IP</th>
+        <th>Kapcsolódott</th>
+        <th>Duration</th>
+        </tr>
+        `
+
+        data.forEach(function(s){
+
+            let flag = ""
+
+            if(s.country_code){
+                flag = getFlagEmoji(s.country_code) + " "
+            }
+
+            html += `
+            <tr>
+                <td>${s.username}</td>
+                <td>${flag}${s.ip}</td>
+                <td>${s.connected_at}</td>
+                <td>${s.duration}</td>
+            </tr>
+            `
+
+        })
+
+        table.innerHTML = html
+
+    }catch(e){
+        console.log("VPN refresh error", e)
+    }
+
+}
+
+setInterval(refreshVPNSessions, 10000)
+
+// =====================
+// VPN CONNECT ALERT
+// =====================
+
+let knownUsers = new Set()
+
+async function checkNewVPNUsers(){
+
+    try{
+
+        const response = await fetch("/api/active-vpn/")
+        const sessions = await response.json()
+
+        sessions.forEach(function(s){
+
+            if(!knownUsers.has(s.username)){
+
+                knownUsers.add(s.username)
+
+                showVPNToast(s)
+
+            }
+
+        })
+
+    }catch(e){
+        console.log("VPN alert error", e)
+    }
+
+}
+
+
+
+function showVPNToast(session){
+
+    const container = document.getElementById("vpn-toast-container")
+
+    if(!container) return
+
+    const toast = document.createElement("div")
+
+    toast.className = "vpn-toast"
+
+    toast.innerHTML =
+        "🟢 <b>" + session.username +
+        "</b> connected from " + session.ip
+
+    container.appendChild(toast)
+
+    setTimeout(function(){
+        toast.remove()
+    }, 5000)
+
+}
+
+setInterval(checkNewVPNUsers, 5000)
+

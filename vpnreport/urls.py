@@ -14,19 +14,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path
-from vpn.views import dashboard, report_daily, report_weekly, report_monthly
-from vpn.views import vpn_locations
-from vpn.views import dashboard_stats
+from vpn import views
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', dashboard),
 
-    path('report/daily/', report_daily),
-    path('report/weekly/', report_weekly),
-    path('report/monthly/', report_monthly),
-    path('api/vpn-locations/', vpn_locations),
-    path('api/dashboard-stats/', dashboard_stats),
+    path('', views.dashboard),
+
+    path('report/daily/', views.report_daily),
+    path('report/weekly/', views.report_weekly),
+    path('report/monthly/', views.report_monthly),
+
+    path('api/vpn-locations/', views.vpn_locations),
+    path('api/dashboard-stats/', views.dashboard_stats),
+    path('api/active-vpn/', views.active_vpn_sessions),
 ]
