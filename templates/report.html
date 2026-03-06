@@ -6,22 +6,34 @@
 
 <h2>{{ title }}</h2>
 
+<div style="margin-bottom:20px;">
+
+<a href="{% url 'report_pdf' period %}" class="menu-btn">
+PDF riport letöltése
+</a>
+
+</div>
+
 <div class="panel">
 
 <table>
 
+<thead>
 <tr>
 <th>Felhasználó</th>
 <th>Session</th>
 <th>Összes VPN idő</th>
 </tr>
+</thead>
+
+<tbody>
 
 {% for u in users %}
 
 <tr>
 
 <td>
-<a href="/report/user/{{ u.username }}/">
+<a href="{% url 'user_history' u.username %}">
 {{ u.username }}
 </a>
 </td>
@@ -45,6 +57,8 @@ Nincs adat
 </tr>
 
 {% endfor %}
+
+</tbody>
 
 </table>
 

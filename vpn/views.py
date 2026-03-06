@@ -1,23 +1,35 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Sum
+from django.core.paginator import Paginator
+from django.template.loader import get_template
+
+from datetime import timedelta
+from xhtml2pdf import pisa
 
 from .models import VPNSession
 
+def format_duration(seconds):
 
-# =========================
-# DASHBOARD PAGE
-# =========================
+    if not seconds:
+        return "0h 0m"
+
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+
+    return f"{hours}h {minutes}m"
+
+# ======================================================
+# DASHBOARD
+# ======================================================
 
 def dashboard(request):
 
-    # csak aktív VPN sessionök
     active_sessions = VPNSession.objects.filter(
         disconnected_at__isnull=True
     ).order_by("-connected_at")
 
-    # duration számítás
     now = timezone.now()
 
     for s in active_sessions:
@@ -59,25 +71,9 @@ def dashboard(request):
     return render(request, "dashboard.html", context)
 
 
-# =========================
-# REPORT PLACEHOLDERS
-# =========================
-
-def report_daily(request):
-    return JsonResponse({"status": "daily report placeholder"})
-
-
-def report_weekly(request):
-    return JsonResponse({"status": "weekly report placeholder"})
-
-
-def report_monthly(request):
-    return JsonResponse({"status": "monthly report placeholder"})
-
-
-# =========================
-# VPN LOCATIONS API
-# =========================
+# ======================================================
+# API - VPN LOCATIONS
+# ======================================================
 
 def vpn_locations(request):
 
@@ -114,9 +110,9 @@ def vpn_locations(request):
     return JsonResponse(data, safe=False)
 
 
-# =========================
-# DASHBOARD STATS API
-# =========================
+# ======================================================
+# API - DASHBOARD STATS
+# ======================================================
 
 def dashboard_stats(request):
 
@@ -145,9 +141,10 @@ def dashboard_stats(request):
         "top_user": top_user["username"] if top_user else "-"
     })
 
-# =========================
-# ACTIVE VPN SESSIONS API
-# =========================
+
+# ======================================================
+# API - ACTIVE VPN SESSIONS
+# ======================================================
 
 def active_vpn_sessions(request):
 
@@ -180,14 +177,10 @@ def active_vpn_sessions(request):
 
     return JsonResponse(data, safe=False)
 
-from datetime import timedelta
-from django.core.paginator import Paginator
-from django.db.models import Sum
 
-
-# =========================
-# DAILY REPORT
-# =========================
+# ======================================================
+# REPORTS
+# ======================================================
 
 def report_daily(request):
 
@@ -210,13 +203,10 @@ def report_daily(request):
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Napi VPN riport"
+        "title": "Napi VPN riport",
+        "period": "daily"
     })
 
-
-# =========================
-# WEEKLY REPORT
-# =========================
 
 def report_weekly(request):
 
@@ -239,13 +229,10 @@ def report_weekly(request):
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Heti VPN riport"
+        "title": "Heti VPN riport",
+        "period": "weekly"
     })
 
-
-# =========================
-# MONTHLY REPORT
-# =========================
 
 def report_monthly(request):
 
@@ -268,13 +255,14 @@ def report_monthly(request):
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Havi VPN riport"
+        "title": "Havi VPN riport",
+        "period": "monthly"
     })
 
 
-# =========================
+# ======================================================
 # USER HISTORY
-# =========================
+# ======================================================
 
 def user_history(request, username):
 
@@ -286,7 +274,6 @@ def user_history(request, username):
     paginator = Paginator(sessions, 50)
 
     page_number = request.GET.get("page")
-
     page_obj = paginator.get_page(page_number)
 
     return render(request, "user_history.html", {
@@ -294,3 +281,102 @@ def user_history(request, username):
         "sessions": page_obj
     })
 
+
+# ======================================================
+# PDF REPORT
+# ======================================================
+
+def report_pdf(request, period):
+    period_hu = {
+        "daily": "Napi",
+        "weekly": "Heti",
+        "monthly": "Havi"
+    }.get(period, period)
+
+    now = timezone.now()
+
+    if period == "daily":
+
+        sessions = VPNSession.objects.filter(
+            connected_at__date=now.date(),
+            disconnected_at__isnull=False
+        )
+
+    elif period == "weekly":
+
+        start = now - timedelta(days=7)
+
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=start,
+            disconnected_at__isnull=False
+        )
+
+    elif period == "monthly":
+
+        start = now - timedelta(days=30)
+
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=start,
+            disconnected_at__isnull=False
+        )
+
+    else:
+
+        sessions = VPNSession.objects.none()
+
+
+    # =========================
+    # SESSION DURATION FORMAT
+    # =========================
+
+    for s in sessions:
+        s.duration = format_duration(s.duration_seconds)
+
+
+    # =========================
+    # USER SUMMARY
+    # =========================
+
+    user_summary = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    for u in user_summary:
+        u["duration"] = format_duration(u["total_duration"])
+
+
+    # =========================
+    # TOP USER
+    # =========================
+
+    top_user = user_summary[0]["username"] if user_summary else "-"
+
+
+    # =========================
+    # PDF TEMPLATE
+    # =========================
+
+    template = get_template("report_pdf.html")
+
+    html = template.render({
+        "sessions": sessions,
+        "user_summary": user_summary,
+        "period": period,
+        "period_hu": period_hu,
+        "now": now,
+        "top_user": top_user
+    })
+
+    response = HttpResponse(content_type="application/pdf")
+
+    response["Content-Disposition"] = f'attachment; filename="vpn_{period_hu}_riport.pdf"'
+
+    pisa.CreatePDF(html, dest=response)
+
+    return response

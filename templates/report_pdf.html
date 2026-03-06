@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<style>
+
+@page {
+    size: A4;
+    margin: 80px 40px 40px 40px;
+}
+
+body{
+font-family: DejaVu Sans;
+font-size:12px;
+color:#333;
+}
+
+.header{
+position:fixed;
+top:-60px;
+left:0;
+right:0;
+height:60px;
+background:#4ea67d;
+color:white;
+padding:15px;
+font-size:20px;
+font-weight:bold;
+}
+
+.subheader{
+position:fixed;
+top:0;
+left:0;
+right:0;
+height:30px;
+background:#d7a300;
+padding:8px;
+font-weight:bold;
+}
+
+.info{
+margin-top:20px;
+margin-bottom:25px;
+font-size:12px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+margin-bottom:30px;
+table-layout:fixed;
+}
+
+th{
+background:#4ea67d;
+color:white;
+padding:8px;
+text-align:left;
+}
+
+td{
+padding:8px;
+border-bottom:1px solid #ddd;
+}
+
+tr:nth-child(even){
+background:#f5f5f5;
+}
+
+.section-title{
+font-size:16px;
+font-weight:bold;
+margin-top:20px;
+margin-bottom:10px;
+}
+
+.diagram{
+font-family:monospace;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+JGK VPN riport
+</div>
+
+<div class="subheader">
+{{ period_hu }} jelentés
+</div>
+
+<div class="info">
+<strong>Top felhasználó:</strong> {{ top_user }} <br>
+<strong>Riport generálva:</strong> {{ now|date:"Y.m.d H:i" }}
+</div>
+
+
+<!-- ===================================== -->
+<!-- VPN HASZNÁLAT DIAGRAM -->
+<!-- ===================================== -->
+
+<div class="section-title">
+VPN használat diagram
+</div>
+
+<table>
+
+<tr>
+<th style="width:200px;">Felhasználó</th>
+<th>Használat</th>
+</tr>
+
+{% for u in user_summary %}
+
+<tr>
+
+<td>{{ u.username }}</td>
+
+<td class="diagram">
+
+{% widthratio u.total_duration 3600 2 as bars %}
+
+{% if bars < 4 %}
+<font color="#d9534f">
+{% elif bars < 8 %}
+<font color="#f0ad4e">
+{% else %}
+<font color="#5cb85c">
+{% endif %}
+
+{% for i in "x"|rjust:bars %}█{% endfor %}
+
+</font>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+
+<div style="page-break-before:always;"></div>
+
+
+<!-- ===================================== -->
+<!-- FELHASZNÁLÓI ÖSSZESÍTÉS -->
+<!-- ===================================== -->
+
+<div class="section-title">
+Felhasználói összesítés
+</div>
+
+<table>
+
+<tr>
+<th>Felhasználó</th>
+<th>Session</th>
+<th>Összes VPN idő</th>
+</tr>
+
+{% for u in user_summary %}
+
+<tr>
+
+<td>{{ u.username }}</td>
+
+<td>{{ u.total_sessions }}</td>
+
+<td>{{ u.duration }}</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3">Nincs adat</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+
+<div style="page-break-before:always;"></div>
+
+
+<!-- ===================================== -->
+<!-- VPN SESSION LISTA -->
+<!-- ===================================== -->
+
+<div class="section-title">
+VPN kapcsolatok részletei
+</div>
+
+<table>
+
+<tr>
+<th>Felhasználó</th>
+<th>IP cím</th>
+<th>Csatlakozás</th>
+<th>Bontás</th>
+<th>Időtartam</th>
+</tr>
+
+{% for s in sessions %}
+
+<tr>
+
+<td>{{ s.username }}</td>
+
+<td>{{ s.remote_ip }}</td>
+
+<td>{{ s.connected_at|date:"Y.m.d H:i" }}</td>
+
+<td>{{ s.disconnected_at|date:"Y.m.d H:i" }}</td>
+
+<td>{{ s.duration }}</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5">Nincs session adat</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>

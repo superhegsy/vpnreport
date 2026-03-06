@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<style>
+
+body{
+font-family:Arial;
+background:white;
+color:black;
+font-size:12px;
+}
+
+.header{
+background:#4ea67d;
+color:white;
+padding:18px;
+font-size:22px;
+font-weight:bold;
+}
+
+.subheader{
+background:#f4c300;
+padding:10px;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.info{
+margin-top:10px;
+font-size:11px;
+color:#555;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th{
+background:#4ea67d;
+color:white;
+padding:10px;
+text-align:left;
+font-size:12px;
+}
+
+td{
+padding:9px;
+border-bottom:1px solid #ddd;
+}
+
+tr:nth-child(even){
+background:#f7f7f7;
+}
+
+.footer{
+margin-top:25px;
+font-size:11px;
+color:#777;
+text-align:right;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+JGK VPN REPORT
+</div>
+
+<div class="subheader">
+{{ period|title }} VPN report
+</div>
+
+<div class="info">
+Generated: {{ now }}
+</div>
+
+<table>
+
+<tr>
+<th>User</th>
+<th>IP</th>
+<th>Connected</th>
+<th>Disconnected</th>
+<th>Duration</th>
+</tr>
+
+{% for s in sessions %}
+
+<tr>
+
+<td>{{ s.username }}</td>
+
+<td>{{ s.remote_ip }}</td>
+
+<td>{{ s.connected_at|date:"Y.m.d H:i:s" }}</td>
+
+<td>{{ s.disconnected_at|date:"Y.m.d H:i:s" }}</td>
+
+<td>{{ s.duration_seconds }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<div class="footer">
+JGK VPN Monitoring System
+</div>
+
+</body>
+</html>
