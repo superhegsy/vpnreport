@@ -1,11 +1,18 @@
+/* =====================================================
+   GLOBAL
+===================================================== */
+
 body{
 margin:0;
-font-family:Arial;
-background:#ffffff; /* oldal háttér fehér */
+font-family:Arial, Helvetica, sans-serif;
+background:#ffffff;
 color:#000;
 }
 
-/* felso menu */
+
+/* =====================================================
+   TOP NAVIGATION
+===================================================== */
 
 .topnav{
 background:#ffffff;
@@ -30,13 +37,17 @@ border-radius:20px;
 text-decoration:none;
 color:white;
 font-size:14px;
+transition:0.2s;
 }
 
 .menu a:hover{
 background:#3d8f69;
 }
 
-/* branding sav */
+
+/* =====================================================
+   BRAND BAR
+===================================================== */
 
 .brandbar{
 height:35px;
@@ -53,23 +64,31 @@ height:35px;
 background:#d7a300;
 }
 
-/* dashboard container */
+
+/* =====================================================
+   MAIN CONTAINER
+===================================================== */
 
 .container{
 padding:20px;
 }
 
-/* stat kartyak */
+
+/* =====================================================
+   STAT CARDS
+===================================================== */
 
 .stats{
 display:flex;
+flex-wrap:wrap;
 gap:20px;
 margin-bottom:20px;
 }
 
 .stat{
 flex:1;
-background:#f4c300; /* JGK sárga stat box */
+min-width:200px;
+background:#f4c300;
 color:#000;
 padding:20px;
 border-radius:8px;
@@ -77,7 +96,44 @@ text-align:center;
 box-shadow:0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* panel */
+.stat h3{
+margin:0;
+font-size:16px;
+}
+
+.stat h1{
+margin:10px 0 0 0;
+font-size:28px;
+font-weight:bold;
+}
+
+
+/* =====================================================
+   CLOCK
+===================================================== */
+
+#clock-time{
+font-size:28px;
+font-weight:bold;
+margin-top:8px;
+}
+
+#clock-date{
+font-size:14px;
+margin-top:4px;
+opacity:0.9;
+}
+
+#clock-day{
+font-size:14px;
+font-weight:bold;
+opacity:0.9;
+}
+
+
+/* =====================================================
+   PANELS
+===================================================== */
 
 .panel{
 background:#ffffff;
@@ -88,26 +144,41 @@ margin-bottom:20px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* grafikon layout */
+.panel h4{
+margin-top:0;
+}
+
+
+/* =====================================================
+   LAYOUT ROWS
+===================================================== */
 
 .row{
 display:flex;
 gap:20px;
 margin-bottom:20px;
+flex-wrap:wrap;
 }
 
 .col{
 flex:1;
+min-width:300px;
 }
 
-/* terkep */
+
+/* =====================================================
+   MAP
+===================================================== */
 
 #map{
-height:350px;
+height:650px;
 border-radius:8px;
 }
 
-/* table */
+
+/* =====================================================
+   TABLE
+===================================================== */
 
 table{
 width:100%;
@@ -116,7 +187,7 @@ margin-top:10px;
 color:#000;
 }
 
-th,td{
+th, td{
 padding:10px;
 border-bottom:1px solid #ddd;
 }
@@ -127,22 +198,14 @@ background:#4ea67d;
 color:white;
 }
 
-/* zebra sorok */
-
 tr:nth-child(even){
 background:#f7f7f7;
 }
 
-/* footer */
 
-.footer{
-background:#4ea67d;
-color:white;
-text-align:center;
-padding:10px;
-}
-
-/* linkek a tablaban */
+/* =====================================================
+   TABLE LINKS
+===================================================== */
 
 table a{
 color:#1565c0;
@@ -153,6 +216,11 @@ font-weight:500;
 table a:hover{
 color:#2e7d32;
 }
+
+
+/* =====================================================
+   MENU BUTTON
+===================================================== */
 
 .menu-btn{
 background:#4ea67d;
@@ -167,19 +235,56 @@ font-size:14px;
 background:#3d8f69;
 }
 
-/* VPN session duration colors */
 
-.vpn-short {
+/* =====================================================
+   VPN SESSION COLORS
+===================================================== */
+
+.vpn-short{
 color:#2ecc71;
 font-weight:600;
 }
 
-.vpn-medium {
+.vpn-medium{
 color:#f1c40f;
 font-weight:600;
 }
 
-.vpn-long {
+.vpn-long{
 color:#e74c3c;
 font-weight:700;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.footer{
+background:#4ea67d;
+color:white;
+text-align:center;
+padding:10px;
+margin-top:20px;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width:900px){
+
+.stats{
+flex-direction:column;
+}
+
+.row{
+flex-direction:column;
+}
+
+#map{
+height:450px;
+}
+
 }
