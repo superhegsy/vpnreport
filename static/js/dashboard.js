@@ -1,5 +1,5 @@
 // =====================================================
-// VPN DASHBOARD SCRIPT (STABLE VERSION)
+// VPN DASHBOARD SCRIPT (PRODUCTION STABLE)
 // =====================================================
 
 
@@ -11,7 +11,7 @@ const MAP_ZOOM_DEFAULT = 6
 const MAP_ZOOM_SINGLE = 7
 const MAP_ZOOM_MULTI = 6
 
-let map
+let map = null
 let knownUsers = new Set()
 
 
@@ -38,17 +38,33 @@ function getFlagEmoji(code) {
 }
 
 
-// ================= DATE FIX =================
-// ISO datetime javítás JS-nek
+// ================= DATE PARSER =================
 
-function parseISODate(value) {
+function parseDate(value) {
 
     if (!value) return null
 
-    // levágjuk a microsecond részt
-    const clean = value.split(".")[0]
+    try {
 
-    return new Date(clean)
+        let clean = value
+
+        if (clean.includes(".")) {
+            clean = clean.split(".")[0]
+        }
+
+        const d = new Date(clean)
+
+        if (isNaN(d.getTime())) return null
+
+        return d
+
+    }
+
+    catch {
+
+        return null
+
+    }
 
 }
 
@@ -58,6 +74,7 @@ function parseISODate(value) {
 function initMap() {
 
     const mapElement = document.getElementById("map")
+
     if (!mapElement) return
 
     map = L.map("map").setView(HQ, MAP_ZOOM_DEFAULT)
@@ -168,7 +185,13 @@ function pulse(location) {
         fillOpacity: 0.3
     }).addTo(map)
 
-    setTimeout(() => map.removeLayer(pulse), 2000)
+    setTimeout(() => {
+
+        if (map && map.hasLayer(pulse)) {
+            map.removeLayer(pulse)
+        }
+
+    }, 2000)
 
 }
 
@@ -207,6 +230,7 @@ async function refreshVPNSessions() {
         const sessions = await res.json()
 
         const table = document.getElementById("vpn-table")
+
         if (!table) return
 
         let html = `
@@ -263,6 +287,7 @@ async function checkNewVPNUsers() {
             if (!knownUsers.has(session.username)) {
 
                 knownUsers.add(session.username)
+
                 showVPNToast(session)
 
             }
@@ -283,6 +308,7 @@ async function checkNewVPNUsers() {
 function showVPNToast(session) {
 
     const container = document.getElementById("vpn-toast-container")
+
     if (!container) return
 
     const toast = document.createElement("div")
@@ -305,15 +331,17 @@ function updateDurations() {
 
     const now = new Date()
 
-    document.querySelectorAll(".duration").forEach(el => {
+    const rows = document.querySelectorAll(".duration")
 
-        const start = parseISODate(el.dataset.start)
+    rows.forEach(el => {
+
+        const start = parseDate(el.dataset.start)
 
         if (!start) return
 
         const diff = Math.floor((now - start) / 1000)
 
-        if (diff < 0) return
+        if (diff <= 0) return
 
         const h = Math.floor(diff / 3600)
         const m = Math.floor((diff % 3600) / 60)
