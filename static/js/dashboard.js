@@ -2,212 +2,206 @@
 // VPN DASHBOARD SCRIPT
 // =====================================================
 
-
-
 // =====================================================
-// HQ KOORDINÁTÁK
+// CONFIG
 // =====================================================
 
 const HQ = [47.4979, 19.0402]; // Budapest
+const MAP_ZOOM_DEFAULT = 6
+const MAP_ZOOM_SINGLE = 7
+const MAP_ZOOM_MULTI = 6
 
-
+let map
+let knownUsers = new Set()
 
 // =====================================================
 // FLAG EMOJI
 // =====================================================
 
-function getFlagEmoji(countryCode) {
+function getFlagEmoji(code){
 
-    if (!countryCode) return "";
+if(!code) return ""
 
-    return countryCode
-        .toUpperCase()
-        .replace(/./g, char =>
-            String.fromCodePoint(127397 + char.charCodeAt())
-        );
+return code
+.toUpperCase()
+.replace(/./g,char =>
+String.fromCodePoint(127397 + char.charCodeAt())
+)
+
 }
 
-
-
 // =====================================================
-// TÉRKÉP INITIALIZÁLÁS
+// MAP INIT
 // =====================================================
 
-const map = L.map("map").setView(HQ, 6);
+function initMap(){
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18
-}).addTo(map);
+map = L.map("map").setView(HQ, MAP_ZOOM_DEFAULT)
 
-
-// HQ marker
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+maxZoom:18
+}).addTo(map)
 
 L.marker(HQ)
 .addTo(map)
-.bindPopup("VPN Gateway (Budapest HQ)");
+.bindPopup("VPN Gateway (Budapest HQ)")
 
-
-
-// =====================================================
-// VPN USER LOKÁCIÓK + AUTO ZOOM
-// =====================================================
-
-fetch("/api/vpn-locations/")
-.then(res => res.json())
-.then(data => {
-
-    const bounds = [];
-    const users = [];
-
-    data.forEach(session => {
-
-        if (!session.lat || !session.lon) return;
-
-        const userLocation = [session.lat, session.lon];
-        const flag = getFlagEmoji(session.country_code);
-
-        users.push(userLocation);
-        bounds.push(userLocation);
-
-        // USER MARKER
-
-        const marker = L.marker(userLocation).addTo(map);
-
-        marker.bindTooltip(
-            `<b>${session.username}</b><br>${flag} ${session.ip}`,
-            {
-                direction: "top",
-                offset: [0, -10],
-                opacity: 0.9
-            }
-        );
-
-        // HQ → USER kapcsolat
-
-        L.polyline([HQ, userLocation], {
-            color: "#4ea67d",
-            weight: 2,
-            opacity: 0.7,
-            dashArray: "5,10"
-        }).addTo(map);
-
-        // villanás effekt
-
-        const pulse = L.circle(userLocation, {
-            radius: 30000,
-            color: "#d7a300",
-            fillOpacity: 0.3
-        }).addTo(map);
-
-        setTimeout(() => map.removeLayer(pulse), 2000);
-
-    });
-
-
-
-    // =====================================================
-    // SMART AUTO ZOOM
-    // =====================================================
-
-    if (users.length === 1) {
-
-        // 1 user → HQ + user közé zoom
-
-        map.fitBounds([HQ, users[0]], {
-            padding: [120,120],
-            maxZoom: 7
-        });
-
-    } else if (users.length > 1) {
-
-        // több user → minden user + HQ
-
-        bounds.push(HQ);
-
-        map.fitBounds(bounds, {
-            padding: [80,80],
-            maxZoom: 6
-        });
-
-    }
-
-});
-
-
-
-// =====================================================
-// DASHBOARD STATISZTIKA FRISSÍTÉS
-// =====================================================
-
-function updateDashboardStats(){
-
-fetch("/api/dashboard-stats/")
-.then(res => res.json())
-.then(data => {
-
-const active = document.getElementById("stat-active");
-const today = document.getElementById("stat-today");
-const total = document.getElementById("stat-total");
-const top = document.getElementById("stat-topuser");
-
-if (active) active.innerText = data.active_users;
-if (today) today.innerText = data.today_sessions;
-if (total) total.innerText = data.total_sessions;
-if (top) top.innerText = data.top_user;
-
-});
+loadVPNLocations()
 
 }
 
-setInterval(updateDashboardStats, 5000);
-
-
-
 // =====================================================
-// ZÁSZLÓ AZ IP ELŐTT
+// LOAD VPN LOCATIONS
 // =====================================================
 
-document.querySelectorAll(".ip-flag").forEach(el => {
+async function loadVPNLocations(){
 
-const code = el.dataset.code;
+try{
 
-if(code){
-el.innerText = getFlagEmoji(code) + " ";
+const response = await fetch("/api/vpn-locations/")
+const sessions = await response.json()
+
+const bounds = []
+const users = []
+
+sessions.forEach(session=>{
+
+if(!session.lat || !session.lon) return
+
+const location = [session.lat,session.lon]
+const flag = getFlagEmoji(session.country_code)
+
+users.push(location)
+bounds.push(location)
+
+const marker = L.marker(location).addTo(map)
+
+marker.bindTooltip(
+`<b>${session.username}</b><br>${flag} ${session.ip}`,
+{
+direction:"top",
+offset:[0,-10],
+opacity:0.9
+}
+)
+
+L.polyline([HQ,location],{
+color:"#4ea67d",
+weight:2,
+opacity:0.7,
+dashArray:"5,10"
+}).addTo(map)
+
+pulseEffect(location)
+
+})
+
+applySmartZoom(users,bounds)
+
+}catch(err){
+
+console.error("VPN location error:",err)
+
 }
 
-});
-
-
+}
 
 // =====================================================
-// VPN SESSION TABLE AUTO REFRESH
+// SMART ZOOM
+// =====================================================
+
+function applySmartZoom(users,bounds){
+
+if(users.length===1){
+
+map.fitBounds([HQ,users[0]],{
+padding:[120,120],
+maxZoom:MAP_ZOOM_SINGLE
+})
+
+}
+
+else if(users.length>1){
+
+bounds.push(HQ)
+
+map.fitBounds(bounds,{
+padding:[80,80],
+maxZoom:MAP_ZOOM_MULTI
+})
+
+}
+
+}
+
+// =====================================================
+// PULSE EFFECT
+// =====================================================
+
+function pulseEffect(location){
+
+const pulse = L.circle(location,{
+radius:30000,
+color:"#d7a300",
+fillOpacity:0.3
+}).addTo(map)
+
+setTimeout(()=>map.removeLayer(pulse),2000)
+
+}
+
+// =====================================================
+// DASHBOARD STATS
+// =====================================================
+
+async function updateDashboardStats(){
+
+try{
+
+const response = await fetch("/api/dashboard-stats/")
+const data = await response.json()
+
+setText("stat-active",data.active_users)
+setText("stat-today",data.today_sessions)
+setText("stat-total",data.total_sessions)
+setText("stat-topuser",data.top_user)
+
+}catch(err){
+
+console.error("Dashboard stats error:",err)
+
+}
+
+}
+
+// =====================================================
+// TABLE REFRESH
 // =====================================================
 
 async function refreshVPNSessions(){
 
 try{
 
-const response = await fetch("/api/active-vpn/");
-const sessions = await response.json();
+const response = await fetch("/api/active-vpn/")
+const sessions = await response.json()
 
-const table = document.querySelector("#vpn-table");
+const table = document.querySelector("#vpn-table")
+if(!table) return
 
-if(!table) return;
-
-let rows = `
+let html = `
 <tr>
 <th>Felhasználó</th>
 <th>Külső IP</th>
 <th>Kapcsolódott</th>
 <th>Duration</th>
 </tr>
-`;
+`
 
-sessions.forEach(s => {
+sessions.forEach(s=>{
 
-const flag = s.country_code ? getFlagEmoji(s.country_code) + " " : "";
+const flag = s.country_code ? getFlagEmoji(s.country_code)+" " : ""
 
-rows += `
+html+=`
 <tr>
 <td>${s.username}</td>
 <td>${flag}${s.ip}</td>
@@ -216,107 +210,120 @@ rows += `
 ${s.duration}
 </td>
 </tr>
-`;
+`
 
-});
+})
 
-table.innerHTML = rows;
+table.innerHTML = html
 
 }catch(err){
 
-console.log("VPN refresh error:",err);
+console.error("VPN table refresh error:",err)
 
 }
 
 }
-
-setInterval(refreshVPNSessions,10000);
-
-
 
 // =====================================================
 // VPN CONNECT ALERT
 // =====================================================
 
-let knownUsers = new Set();
-
 async function checkNewVPNUsers(){
 
 try{
 
-const response = await fetch("/api/active-vpn/");
-const sessions = await response.json();
+const response = await fetch("/api/active-vpn/")
+const sessions = await response.json()
 
-sessions.forEach(session => {
+sessions.forEach(session=>{
 
 if(!knownUsers.has(session.username)){
 
-knownUsers.add(session.username);
-
-showVPNToast(session);
+knownUsers.add(session.username)
+showVPNToast(session)
 
 }
 
-});
+})
 
 }catch(err){
 
-console.log("VPN alert error:",err);
+console.error("VPN alert error:",err)
 
 }
 
 }
-
-
 
 function showVPNToast(session){
 
-const container = document.getElementById("vpn-toast-container");
+const container = document.getElementById("vpn-toast-container")
+if(!container) return
 
-if(!container) return;
+const toast = document.createElement("div")
+toast.className="vpn-toast"
 
-const toast = document.createElement("div");
+toast.innerHTML=
+`🟢 <b>${session.username}</b> connected from ${session.ip}`
 
-toast.className="vpn-toast";
+container.appendChild(toast)
 
-toast.innerHTML=`🟢 <b>${session.username}</b> connected from ${session.ip}`;
-
-container.appendChild(toast);
-
-setTimeout(()=>toast.remove(),5000);
+setTimeout(()=>toast.remove(),5000)
 
 }
 
-setInterval(checkNewVPNUsers,5000);
-
-
-
 // =====================================================
-// LIVE VPN DURATION COUNTER
+// LIVE DURATION COUNTER
 // =====================================================
 
 function updateDurations(){
 
-const elements=document.querySelectorAll(".duration");
+document.querySelectorAll(".duration").forEach(el=>{
 
-elements.forEach(el=>{
+const start = new Date(el.dataset.start)
+const now = new Date()
 
-const start=new Date(el.dataset.start);
-const now=new Date();
+const diff = Math.floor((now-start)/1000)
 
-const diff=Math.floor((now-start)/1000);
+const hours=Math.floor(diff/3600)
+const minutes=Math.floor((diff%3600)/60)
+const seconds=diff%60
 
-const hours=Math.floor(diff/3600);
-const minutes=Math.floor((diff%3600)/60);
-const seconds=diff%60;
-
-el.innerText=
+el.innerText =
 String(hours).padStart(2,"0")+":"+
 String(minutes).padStart(2,"0")+":"+
-String(seconds).padStart(2,"0");
+String(seconds).padStart(2,"0")
 
-});
+})
 
 }
 
-setInterval(updateDurations,1000);
+// =====================================================
+// UTIL
+// =====================================================
+
+function setText(id,value){
+
+const el = document.getElementById(id)
+if(el) el.innerText = value
+
+}
+
+// =====================================================
+// INIT
+// =====================================================
+
+function init(){
+
+initMap()
+
+updateDashboardStats()
+refreshVPNSessions()
+
+setInterval(updateDashboardStats,5000)
+setInterval(refreshVPNSessions,10000)
+setInterval(checkNewVPNUsers,5000)
+setInterval(updateDurations,1000)
+
+}
+
+document.addEventListener("DOMContentLoaded",init)
