@@ -1,16 +1,13 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block content %}
 
-<div class="report-header">
-    <h2>{{ title }}</h2>
-</div>
+<h2>{{ title }}</h2>
 
-<div class="report-actions">
-    <a href="/report/pdf/{{ period }}/" class="menu-btn">
-        PDF letöltése
-    </a>
+<div style="margin-bottom:20px;">
+<a href="/report/pdf/{{ period }}/" class="menu-btn">
+PDF letöltése
+</a>
 </div>
 
 <div class="panel">
@@ -19,9 +16,9 @@
 
 <thead>
 <tr>
-    <th>Felhasználó</th>
-    <th>Session</th>
-    <th>Összes VPN idő</th>
+<th>Felhasználó</th>
+<th>Session</th>
+<th>Összes VPN idő</th>
 </tr>
 </thead>
 
@@ -31,27 +28,19 @@
 
 <tr>
 
-<td class="user-cell">
-    <a href="{% url 'user_history' u.username %}">
-        {{ u.username }}
-    </a>
-</td>
+<td>{{ u.username }}</td>
 
-<td class="session-cell">
-    {{ u.total_sessions }}
-</td>
+<td>{{ u.total_sessions }}</td>
 
-<td class="duration-cell">
-    {{ u.duration }}
-</td>
+<td>{{ u.duration }}</td>
 
 </tr>
 
 {% empty %}
 
-<tr class="empty-row">
-<td colspan="3">
-    Nincs adat
+<tr>
+<td colspan="3" style="text-align:center;padding:20px;">
+Nincs adat
 </td>
 </tr>
 
