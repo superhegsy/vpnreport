@@ -60,6 +60,8 @@ def dashboard(request):
         connected_at__gte=timezone.now() - timedelta(days=7)
     ).count()
 
+    total_sessions = VPNSession.objects.count()
+
     top_user = (
         VPNSession.objects
         .values("username")
@@ -73,6 +75,7 @@ def dashboard(request):
         "active_users": active_users,
         "today_sessions": today_sessions,
         "week_sessions": week_sessions,
+        "total_sessions": total_sessions,
         "top_user": top_user
     }
 
@@ -85,34 +88,24 @@ def dashboard(request):
 
 def vpn_locations(request):
 
-    sessions = (
-        VPNSession.objects
-        .filter(disconnected_at__isnull=True)
-        .values(
-            "username",
-            "remote_ip",
-            "latitude",
-            "longitude",
-            "country",
-            "country_code"
-        )
-        .distinct()
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
     )
 
     data = []
 
     for s in sessions:
 
-        if not s["latitude"] or not s["longitude"]:
+        if not s.latitude or not s.longitude:
             continue
 
         data.append({
-            "username": s["username"],
-            "ip": s["remote_ip"],
-            "lat": s["latitude"],
-            "lon": s["longitude"],
-            "country": s["country"],
-            "country_code": s["country_code"]
+            "username": s.username,
+            "ip": s.remote_ip,
+            "lat": s.latitude,
+            "lon": s.longitude,
+            "country": s.country,
+            "country_code": s.country_code
         })
 
     return JsonResponse(data, safe=False)
@@ -132,11 +125,11 @@ def dashboard_stats(request):
         connected_at__date=timezone.now().date()
     ).count()
 
-    total_sessions = VPNSession.objects.count()
-
     week_sessions = VPNSession.objects.filter(
         connected_at__gte=timezone.now() - timedelta(days=7)
     ).count()
+
+    total_sessions = VPNSession.objects.count()
 
     top_user = (
         VPNSession.objects
@@ -172,8 +165,10 @@ def active_vpn_sessions(request):
     for s in sessions:
 
         delta = now - s.connected_at
-        hours = delta.seconds // 3600
-        minutes = (delta.seconds % 3600) // 60
+        seconds = int(delta.total_seconds())
+
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
 
         if hours > 0:
             duration = f"{hours}h {minutes}m"
@@ -205,15 +200,10 @@ def report_daily(request):
         disconnected_at__isnull=False
     )
 
-    users = (
-        sessions
-        .values("username")
-        .annotate(
-            total_sessions=Count("id"),
-            total_duration=Sum("duration_seconds")
-        )
-        .order_by("-total_duration")
-    )
+    users = sessions.values("username").annotate(
+        total_sessions=Count("id"),
+        total_duration=Sum("duration_seconds")
+    ).order_by("-total_duration")
 
     return render(request, "report.html", {
         "users": users,
@@ -231,15 +221,10 @@ def report_weekly(request):
         disconnected_at__isnull=False
     )
 
-    users = (
-        sessions
-        .values("username")
-        .annotate(
-            total_sessions=Count("id"),
-            total_duration=Sum("duration_seconds")
-        )
-        .order_by("-total_duration")
-    )
+    users = sessions.values("username").annotate(
+        total_sessions=Count("id"),
+        total_duration=Sum("duration_seconds")
+    ).order_by("-total_duration")
 
     return render(request, "report.html", {
         "users": users,
@@ -257,15 +242,10 @@ def report_monthly(request):
         disconnected_at__isnull=False
     )
 
-    users = (
-        sessions
-        .values("username")
-        .annotate(
-            total_sessions=Count("id"),
-            total_duration=Sum("duration_seconds")
-        )
-        .order_by("-total_duration")
-    )
+    users = sessions.values("username").annotate(
+        total_sessions=Count("id"),
+        total_duration=Sum("duration_seconds")
+    ).order_by("-total_duration")
 
     return render(request, "report.html", {
         "users": users,
