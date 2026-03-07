@@ -263,3 +263,31 @@ def live_dashboard(request):
         "active_users": active_sessions.count(),
         "sessions": data
     })
+
+# ======================================================
+# API - VPN LOCATIONS
+# ======================================================
+
+def vpn_locations(request):
+
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    data = []
+
+    for s in sessions:
+
+        if not s.latitude or not s.longitude:
+            continue
+
+        data.append({
+            "username": s.username,
+            "ip": s.remote_ip,
+            "lat": s.latitude,
+            "lon": s.longitude,
+            "country": s.country,
+            "country_code": s.country_code
+        })
+
+    return JsonResponse(data, safe=False)
