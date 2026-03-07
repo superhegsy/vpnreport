@@ -1,25 +1,38 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html lang="hu">
 
 <head>
 
 <meta charset="utf-8">
 <title>JGK VPN Dashboard</title>
 
+<!-- ======================
+     STYLES
+====================== -->
+
 <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2">
 
+<!-- Leaflet Map -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<!-- ======================
+     SCRIPTS
+====================== -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- ======================
+     TOAST STYLE
+====================== -->
+
 <style>
 
-/* ===================== /
-/ VPN CONNECT TOAST /
-/ ===================== */
+/* ===================== */
+/* VPN CONNECT TOAST     */
+/* ===================== */
 
 #vpn-toast-container{
     position:fixed;
@@ -56,6 +69,10 @@
 
 <body>
 
+<!-- ======================
+     TOP NAVIGATION
+====================== -->
+
 <div class="topnav">
 
 <div class="logo">JGK</div>
@@ -71,6 +88,11 @@
 
 <div class="brandbar"></div>
 
+
+<!-- ======================
+     MAIN CONTENT
+====================== -->
+
 <div class="container">
 
 {% block content %}
@@ -78,7 +100,17 @@
 
 </div>
 
+
+<!-- ======================
+     TOAST CONTAINER
+====================== -->
+
 <div id="vpn-toast-container"></div>
+
+
+<!-- ======================
+     FOOTER
+====================== -->
 
 <div class="footer">
 Józsefvárosi Gazdálkodási Központ Zrt. – Megbízható szolgáltatás
