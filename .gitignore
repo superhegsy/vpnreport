@@ -85,3 +85,6 @@ dist/
 # ======================================================
 
 collector/test_log.txt
+
+# GeoIP database
+data/*.mmdb
