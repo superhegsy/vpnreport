@@ -206,6 +206,30 @@ def report_pdf(request, period):
 
     return response
 
+
+# ======================================================
+# USER HISTORY
+# ======================================================
+
+def user_history(request, username):
+
+    sessions = VPNSession.objects.filter(
+        username=username,
+        disconnected_at__isnull=False
+    ).order_by("-connected_at")
+
+    paginator = Paginator(sessions, 50)
+
+    page_number = request.GET.get("page")
+
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "user_history.html", {
+        "username": username,
+        "sessions": page_obj
+    })
+
+
 # ======================================================
 # LIVE DASHBOARD API
 # ======================================================
@@ -225,20 +249,12 @@ def live_dashboard(request):
         delta = now - s.connected_at
         seconds = int(delta.total_seconds())
 
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-
-        if hours > 0:
-            duration = f"{hours}h {minutes}m"
-        else:
-            duration = f"{minutes}m"
-
         data.append({
             "username": s.username,
             "ip": s.remote_ip,
             "country": s.country_code,
             "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
-            "duration": duration,
+            "duration": format_duration(seconds),
             "lat": s.latitude,
             "lon": s.longitude
         })
