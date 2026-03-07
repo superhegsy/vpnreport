@@ -12,11 +12,10 @@ from app.models import VPNSession
 
 
 # ======================================================
-# HELPER
+# HELPERS
 # ======================================================
 
 def format_duration(seconds):
-
     if not seconds:
         return "0h 0m"
 
@@ -24,6 +23,48 @@ def format_duration(seconds):
     minutes = (seconds % 3600) // 60
 
     return f"{hours}h {minutes}m"
+
+
+def get_report_queryset(period):
+
+    now = timezone.now()
+
+    if period == "daily":
+        sessions = VPNSession.objects.filter(
+            connected_at__date=now.date(),
+            disconnected_at__isnull=False
+        )
+        title = "Napi VPN riport"
+
+    elif period == "weekly":
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=now - timedelta(days=7),
+            disconnected_at__isnull=False
+        )
+        title = "Heti VPN riport"
+
+    elif period == "monthly":
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=now - timedelta(days=30),
+            disconnected_at__isnull=False
+        )
+        title = "Havi VPN riport"
+
+    else:
+        sessions = VPNSession.objects.none()
+        title = "VPN riport"
+
+    users = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    return users, title
 
 
 # ======================================================
@@ -41,9 +82,10 @@ def dashboard(request):
     for s in active_sessions:
 
         delta = now - s.connected_at
+        seconds = int(delta.total_seconds())
 
-        hours = delta.seconds // 3600
-        minutes = (delta.seconds % 3600) // 60
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
 
         if hours > 0:
             s.duration = f"{hours}h {minutes}m"
@@ -53,11 +95,11 @@ def dashboard(request):
     active_users = active_sessions.count()
 
     today_sessions = VPNSession.objects.filter(
-        connected_at__date=timezone.now().date()
+        connected_at__date=now.date()
     ).count()
 
     week_sessions = VPNSession.objects.filter(
-        connected_at__gte=timezone.now() - timedelta(days=7)
+        connected_at__gte=now - timedelta(days=7)
     ).count()
 
     total_sessions = VPNSession.objects.count()
@@ -117,16 +159,18 @@ def vpn_locations(request):
 
 def dashboard_stats(request):
 
+    now = timezone.now()
+
     active_users = VPNSession.objects.filter(
         disconnected_at__isnull=True
     ).count()
 
     today_sessions = VPNSession.objects.filter(
-        connected_at__date=timezone.now().date()
+        connected_at__date=now.date()
     ).count()
 
     week_sessions = VPNSession.objects.filter(
-        connected_at__gte=timezone.now() - timedelta(days=7)
+        connected_at__gte=now - timedelta(days=7)
     ).count()
 
     total_sessions = VPNSession.objects.count()
@@ -158,9 +202,9 @@ def active_vpn_sessions(request):
         disconnected_at__isnull=True
     ).order_by("-connected_at")
 
-    data = []
-
     now = timezone.now()
+
+    data = []
 
     for s in sessions:
 
@@ -170,10 +214,7 @@ def active_vpn_sessions(request):
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
 
-        if hours > 0:
-            duration = f"{hours}h {minutes}m"
-        else:
-            duration = f"{minutes}m"
+        duration = f"{hours}h {minutes}m" if hours else f"{minutes}m"
 
         data.append({
             "username": s.username,
@@ -188,68 +229,38 @@ def active_vpn_sessions(request):
 
 
 # ======================================================
-# REPORTS
+# REPORT PAGES
 # ======================================================
 
 def report_daily(request):
 
-    today = timezone.now().date()
-
-    sessions = VPNSession.objects.filter(
-        connected_at__date=today,
-        disconnected_at__isnull=False
-    )
-
-    users = sessions.values("username").annotate(
-        total_sessions=Count("id"),
-        total_duration=Sum("duration_seconds")
-    ).order_by("-total_duration")
+    users, title = get_report_queryset("daily")
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Napi VPN riport",
+        "title": title,
         "period": "daily"
     })
 
 
 def report_weekly(request):
 
-    start = timezone.now() - timedelta(days=7)
-
-    sessions = VPNSession.objects.filter(
-        connected_at__gte=start,
-        disconnected_at__isnull=False
-    )
-
-    users = sessions.values("username").annotate(
-        total_sessions=Count("id"),
-        total_duration=Sum("duration_seconds")
-    ).order_by("-total_duration")
+    users, title = get_report_queryset("weekly")
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Heti VPN riport",
+        "title": title,
         "period": "weekly"
     })
 
 
 def report_monthly(request):
 
-    start = timezone.now() - timedelta(days=30)
-
-    sessions = VPNSession.objects.filter(
-        connected_at__gte=start,
-        disconnected_at__isnull=False
-    )
-
-    users = sessions.values("username").annotate(
-        total_sessions=Count("id"),
-        total_duration=Sum("duration_seconds")
-    ).order_by("-total_duration")
+    users, title = get_report_queryset("monthly")
 
     return render(request, "report.html", {
         "users": users,
-        "title": "Havi VPN riport",
+        "title": title,
         "period": "monthly"
     })
 
@@ -310,53 +321,14 @@ def live_dashboard(request):
         "sessions": data
     })
 
+
 # ======================================================
 # PDF REPORT
 # ======================================================
 
 def report_pdf(request, period):
 
-    if period == "daily":
-        start = timezone.now().date()
-
-        sessions = VPNSession.objects.filter(
-            connected_at__date=start,
-            disconnected_at__isnull=False
-        )
-
-        title = "Napi VPN riport"
-
-    elif period == "weekly":
-
-        start = timezone.now() - timedelta(days=7)
-
-        sessions = VPNSession.objects.filter(
-            connected_at__gte=start,
-            disconnected_at__isnull=False
-        )
-
-        title = "Heti VPN riport"
-
-    elif period == "monthly":
-
-        start = timezone.now() - timedelta(days=30)
-
-        sessions = VPNSession.objects.filter(
-            connected_at__gte=start,
-            disconnected_at__isnull=False
-        )
-
-        title = "Havi VPN riport"
-
-    users = (
-        sessions
-        .values("username")
-        .annotate(
-            total_sessions=Count("id"),
-            total_duration=Sum("duration_seconds")
-        )
-        .order_by("-total_duration")
-    )
+    users, title = get_report_queryset(period)
 
     template = get_template("report_pdf.html")
 
@@ -366,7 +338,12 @@ def report_pdf(request, period):
     })
 
     response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{period}_vpn_report.pdf"'
+
+    date_str = timezone.now().strftime("%Y-%m-%d")
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{period}_vpn_report_{date_str}.pdf"'
+    )
 
     pisa.CreatePDF(html, dest=response)
 
