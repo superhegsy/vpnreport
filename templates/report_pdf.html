@@ -17,7 +17,7 @@ color:#000;
 
 .header{
 background:#f4c300;
-padding:12px;
+padding:14px;
 font-size:20px;
 font-weight:bold;
 margin-bottom:20px;
@@ -44,19 +44,9 @@ text-align:left;
 
 /* column widths */
 
-.col-user{
-width:50%;
-}
-
-.col-session{
-width:20%;
-text-align:center;
-}
-
-.col-duration{
-width:30%;
-text-align:center;
-}
+.col-user{ width:50%; }
+.col-session{ width:20%; text-align:center; }
+.col-duration{ width:30%; text-align:center; }
 
 tr:nth-child(even){
 background:#f5f5f5;
@@ -98,16 +88,33 @@ font-size:11px;
 
 <tr>
 
-<td class="col-user">
-{{ u.username }}
-</td>
+<td class="col-user">{{ u.username }}</td>
 
-<td class="col-session">
-{{ u.total_sessions }}
-</td>
+<td class="col-session">{{ u.total_sessions }}</td>
 
 <td class="col-duration">
+
+{% if u.duration %}
+
 {{ u.duration }}
+
+{% else %}
+
+{% if u.total_duration %}
+
+{% widthratio u.total_duration 3600 1 as hours %}
+{% widthratio u.total_duration 60 1 as minutes %}
+
+{{ hours }}h {{ minutes }}m
+
+{% else %}
+
+0m
+
+{% endif %}
+
+{% endif %}
+
 </td>
 
 </tr>
@@ -120,7 +127,7 @@ font-size:11px;
 
 <div class="footer">
 
-JGK VPN report rendszer
+JGK VPN riport rendszer
 Generalva: {{ now|date:"Y.m.d H:i" }}
 
 </div>
