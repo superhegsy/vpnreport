@@ -7,7 +7,7 @@ from django.template.loader import get_template
 from datetime import timedelta
 from xhtml2pdf import pisa
 
-from app.models import VPNSession
+from app.models.vpn_session import VPNSession
 
 
 # ================= HELPERS =================
@@ -146,7 +146,8 @@ def live_dashboard(request):
 
         data.append({
             "username": s.username,
-            "ip": s.ip_address,
+            "remote_ip": s.remote_ip,
+            "country_code": s.country_code,
             "duration": duration
         })
 
@@ -235,6 +236,8 @@ def report_pdf(request, period):
     return response
 
 
+# ================= API - MAP =================
+
 def vpn_locations(request):
 
     sessions = VPNSession.objects.filter(
@@ -244,10 +247,73 @@ def vpn_locations(request):
     data = []
 
     for s in sessions:
+
+        if s.latitude and s.longitude:
+
+            data.append({
+                "username": s.username,
+                "remote_ip": s.remote_ip,
+                "country_code": s.country_code,
+                "latitude": s.latitude,
+                "longitude": s.longitude
+            })
+
+    return JsonResponse(data, safe=False)
+
+
+# ================= API - ACTIVE VPN =================
+
+def active_vpn_sessions(request):
+
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    data = []
+
+    now = timezone.now()
+
+    for s in sessions:
+
+        duration = int((now - s.connected_at).total_seconds())
+
         data.append({
             "username": s.username,
-            "ip": s.ip_address,
-            "country": getattr(s, "country", None)
+            "remote_ip": s.remote_ip,
+            "country_code": s.country_code,
+            "connected_at": s.connected_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration": duration
         })
 
     return JsonResponse(data, safe=False)
+
+
+# ================= API - DASHBOARD STATS =================
+
+def dashboard_stats(request):
+
+    now = timezone.now()
+
+    active = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    ).count()
+
+    today = VPNSession.objects.filter(
+        connected_at__date=now.date()
+    ).count()
+
+    top = (
+        VPNSession.objects
+        .values("username")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+        .first()
+    )
+
+    top_user = top["username"] if top else ""
+
+    return JsonResponse({
+        "active_users": active,
+        "today_sessions": today,
+        "top_user": top_user
+    })

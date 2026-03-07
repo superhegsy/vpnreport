@@ -5,25 +5,18 @@
 
 <h2>VPN Dashboard</h2>
 
-<!-- ======================
-     STAT CARDS
-====================== -->
-
 <div class="stats">
 
-    <!-- Aktív VPN user -->
     <div class="stat">
         <h3>Aktív VPN user</h3>
         <h1 id="stat-active">{{ active_users }}</h1>
     </div>
 
-    <!-- Mai VPN session -->
     <div class="stat">
         <h3>Mai VPN session</h3>
         <h1 id="stat-today">{{ today_sessions }}</h1>
     </div>
 
-    <!-- Top VPN user -->
     <div class="stat">
         <h3>Top VPN user</h3>
         <h1 id="stat-topuser">
@@ -35,7 +28,6 @@
         </h1>
     </div>
 
-    <!-- Óra -->
     <div class="stat">
         <h3>Idő</h3>
         <h1 id="clock-time">--:--:--</h1>
@@ -44,11 +36,6 @@
 
 </div>
 
-
-
-<!-- ======================
-     ACTIVE VPN SESSIONS
-====================== -->
 
 <div class="panel">
 
@@ -82,14 +69,6 @@
 
 </tr>
 
-{% empty %}
-
-<tr>
-<td colspan="4" style="text-align:center;padding:20px;">
-Nincs aktív VPN kapcsolat
-</td>
-</tr>
-
 {% endfor %}
 
 </table>
@@ -97,10 +76,6 @@ Nincs aktív VPN kapcsolat
 </div>
 
 
-
-<!-- ======================
-     VPN MAP
-====================== -->
 
 <div class="panel">
 
@@ -112,17 +87,8 @@ Nincs aktív VPN kapcsolat
 
 
 
-<!-- ======================
-     NOTIFICATIONS
-====================== -->
-
 <div id="vpn-toast-container"></div>
 
-
-
-<!-- ======================
-     JAVASCRIPT
-====================== -->
-
+<script src="{% static 'js/dashboard.js' %}"></script>
 
 {% endblock %}
