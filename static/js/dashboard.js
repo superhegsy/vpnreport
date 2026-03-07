@@ -291,3 +291,29 @@ table.innerHTML = rows;
 }
 
 setInterval(refreshDashboard, 10000);
+
+function updateDurations() {
+
+const elements = document.querySelectorAll(".duration");
+
+elements.forEach(el => {
+
+const start = new Date(el.dataset.start);
+const now = new Date();
+
+const diff = Math.floor((now - start) / 1000);
+
+const hours = Math.floor(diff / 3600);
+const minutes = Math.floor((diff % 3600) / 60);
+const seconds = diff % 60;
+
+el.innerText =
+String(hours).padStart(2,'0') + ":" +
+String(minutes).padStart(2,'0') + ":" +
+String(seconds).padStart(2,'0');
+
+});
+
+}
+
+setInterval(updateDurations, 1000);
