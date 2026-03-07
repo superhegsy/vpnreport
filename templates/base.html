@@ -12,10 +12,11 @@
      STYLES
 ====================== -->
 
-<link rel="stylesheet" href="{% static 'css/style.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
 
 <!-- Leaflet Map -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <!-- ======================
      SCRIPTS
@@ -29,10 +30,6 @@
 ====================== -->
 
 <style>
-
-/* ===================== */
-/* VPN CONNECT TOAST     */
-/* ===================== */
 
 #vpn-toast-container{
     position:fixed;
@@ -53,14 +50,17 @@
 }
 
 @keyframes slideIn{
+
     from{
         transform:translateX(100%);
         opacity:0;
     }
+
     to{
         transform:translateX(0);
         opacity:1;
     }
+
 }
 
 </style>
@@ -78,10 +78,12 @@
 <div class="logo">JGK</div>
 
 <div class="menu">
+
 <a href="/">Dashboard</a>
 <a href="/report/daily/">Napi riport</a>
 <a href="/report/weekly/">Heti riport</a>
 <a href="/report/monthly/">Havi riport</a>
+
 </div>
 
 </div>
@@ -113,11 +115,17 @@
 ====================== -->
 
 <div class="footer">
+
 Józsefvárosi Gazdálkodási Központ Zrt. – Megbízható szolgáltatás
+
 </div>
 
 
-<script src="{% static 'js/dashboard.js' %}"></script>
+<!-- ======================
+     DASHBOARD SCRIPT
+====================== -->
+
+<script src="{% static 'js/dashboard.js' %}?v=3"></script>
 
 </body>
 </html>
