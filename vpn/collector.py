@@ -35,7 +35,6 @@ def collect_fortigate_sessions():
 
         for tunnel in tunnels:
 
-            # csak remote access VPN
             if tunnel.get("type") != "dialup":
                 continue
 
@@ -43,17 +42,15 @@ def collect_fortigate_sessions():
             remote_ip = tunnel.get("rgwy")
             vpn_ip = tunnel.get("tun_id")
 
-            if not username:
+            if not username or not remote_ip:
                 continue
 
-            # az aktív session kulcs
-            session_key = f"{username}_{vpn_ip}"
+            session_key = f"{username}_{remote_ip}"
             active_sessions.append(session_key)
 
-            # nézzük van-e már aktív session
             session = VPNSession.objects.filter(
                 username=username,
-                vpn_ip=vpn_ip,
+                remote_ip=remote_ip,
                 disconnected_at__isnull=True
             ).first()
 
@@ -76,7 +73,7 @@ def collect_fortigate_sessions():
 
     for session in open_sessions:
 
-        key = f"{session.username}_{session.vpn_ip}"
+        key = f"{session.username}_{session.remote_ip}"
 
         if key not in active_sessions:
 
