@@ -334,7 +334,8 @@ def report_pdf(request, period):
 
     html = template.render({
         "users": users,
-        "title": title
+        "title": title,
+        "now": timezone.now()
     })
 
     response = HttpResponse(content_type="application/pdf")

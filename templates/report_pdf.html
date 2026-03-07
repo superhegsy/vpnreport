@@ -5,80 +5,48 @@
 
 <style>
 
-@page {
-    size: A4;
-    margin: 80px 40px 40px 40px;
-}
-
 body{
-font-family: DejaVu Sans;
+font-family: Arial, Helvetica, sans-serif;
 font-size:12px;
-color:#333;
+color:#000;
 }
 
-.header{
-position:fixed;
-top:-60px;
-left:0;
-right:0;
-height:60px;
-background:#4ea67d;
-color:white;
-padding:15px;
-font-size:20px;
-font-weight:bold;
+h1{
+font-size:22px;
+margin-bottom:5px;
 }
 
-.subheader{
-position:fixed;
-top:0;
-left:0;
-right:0;
-height:30px;
-background:#d7a300;
-padding:8px;
-font-weight:bold;
-}
-
-.info{
-margin-top:20px;
-margin-bottom:25px;
-font-size:12px;
+h2{
+font-size:16px;
+margin-bottom:20px;
+color:#555;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:15px;
-margin-bottom:30px;
-table-layout:fixed;
+margin-top:20px;
+}
+
+th, td{
+padding:8px;
+border-bottom:1px solid #ddd;
+text-align:left;
 }
 
 th{
 background:#4ea67d;
 color:white;
-padding:8px;
-text-align:left;
-}
-
-td{
-padding:8px;
-border-bottom:1px solid #ddd;
 }
 
 tr:nth-child(even){
 background:#f5f5f5;
 }
 
-.section-title{
-font-size:16px;
-font-weight:bold;
-margin-top:20px;
-margin-bottom:10px;
-}
-
-.diagram{
-font-family:monospace;
+.footer{
+margin-top:30px;
+font-size:11px;
+color:#777;
 }
 
 </style>
@@ -87,86 +55,26 @@ font-family:monospace;
 
 <body>
 
-<div class="header">
-JGK VPN riport
-</div>
+<h1>{{ title }}</h1>
 
-<div class="subheader">
-{{ period_hu }} jelentés
-</div>
+<h2>
+Riport dátuma: {{ now|date:"Y.m.d" }}
+</h2>
 
-<div class="info">
-<strong>Top felhasználó:</strong> {{ top_user }} <br>
-<strong>Riport generálva:</strong> {{ now|date:"Y.m.d H:i" }}
-</div>
-
-
-<!-- ===================================== -->
-<!-- VPN HASZNÁLAT DIAGRAM -->
-<!-- ===================================== -->
-
-<div class="section-title">
-VPN használat diagram
-</div>
 
 <table>
 
-<tr>
-<th style="width:200px;">Felhasználó</th>
-<th>Használat</th>
-</tr>
-
-{% for u in user_summary %}
-
-<tr>
-
-<td>{{ u.username }}</td>
-
-<td class="diagram">
-
-{% widthratio u.total_duration 3600 2 as bars %}
-
-{% if bars < 4 %}
-<font color="#d9534f">
-{% elif bars < 8 %}
-<font color="#f0ad4e">
-{% else %}
-<font color="#5cb85c">
-{% endif %}
-
-{% for i in "x"|rjust:bars %}█{% endfor %}
-
-</font>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
-
-
-<div style="page-break-before:always;"></div>
-
-
-<!-- ===================================== -->
-<!-- FELHASZNÁLÓI ÖSSZESÍTÉS -->
-<!-- ===================================== -->
-
-<div class="section-title">
-Felhasználói összesítés
-</div>
-
-<table>
-
+<thead>
 <tr>
 <th>Felhasználó</th>
 <th>Session</th>
 <th>Összes VPN idő</th>
 </tr>
+</thead>
 
-{% for u in user_summary %}
+<tbody>
+
+{% for u in users %}
 
 <tr>
 
@@ -174,67 +82,28 @@ Felhasználói összesítés
 
 <td>{{ u.total_sessions }}</td>
 
-<td>{{ u.duration }}</td>
+<td>
+{% if u.total_duration %}
+{{ u.total_duration|floatformat:0 }} mp
+{% else %}
+0
+{% endif %}
+</td>
 
-</tr>
-
-{% empty %}
-
-<tr>
-<td colspan="3">Nincs adat</td>
 </tr>
 
 {% endfor %}
 
+</tbody>
+
 </table>
 
+<div class="footer">
 
-<div style="page-break-before:always;"></div>
+JGK VPN riport rendszer
+Generálva: {{ now|date:"Y.m.d H:i" }}
 
-
-<!-- ===================================== -->
-<!-- VPN SESSION LISTA -->
-<!-- ===================================== -->
-
-<div class="section-title">
-VPN kapcsolatok részletei
 </div>
-
-<table>
-
-<tr>
-<th>Felhasználó</th>
-<th>IP cím</th>
-<th>Csatlakozás</th>
-<th>Bontás</th>
-<th>Időtartam</th>
-</tr>
-
-{% for s in sessions %}
-
-<tr>
-
-<td>{{ s.username }}</td>
-
-<td>{{ s.remote_ip }}</td>
-
-<td>{{ s.connected_at|date:"Y.m.d H:i" }}</td>
-
-<td>{{ s.disconnected_at|date:"Y.m.d H:i" }}</td>
-
-<td>{{ s.duration }}</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-<td colspan="5">Nincs session adat</td>
-</tr>
-
-{% endfor %}
-
-</table>
 
 </body>
 </html>
