@@ -205,3 +205,45 @@ def report_pdf(request, period):
     pisa.CreatePDF(html, dest=response)
 
     return response
+
+# ======================================================
+# LIVE DASHBOARD API
+# ======================================================
+
+def live_dashboard(request):
+
+    active_sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    now = timezone.now()
+
+    data = []
+
+    for s in active_sessions:
+
+        delta = now - s.connected_at
+        seconds = int(delta.total_seconds())
+
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+
+        if hours > 0:
+            duration = f"{hours}h {minutes}m"
+        else:
+            duration = f"{minutes}m"
+
+        data.append({
+            "username": s.username,
+            "ip": s.remote_ip,
+            "country": s.country_code,
+            "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
+            "duration": duration,
+            "lat": s.latitude,
+            "lon": s.longitude
+        })
+
+    return JsonResponse({
+        "active_users": active_sessions.count(),
+        "sessions": data
+    })
