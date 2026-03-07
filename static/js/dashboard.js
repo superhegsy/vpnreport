@@ -1,11 +1,11 @@
 // =====================================================
-// VPN DASHBOARD SCRIPT
+// VPN DASHBOARD SCRIPT (STABLE VERSION)
 // =====================================================
 
 
 // ================= CONFIG =================
 
-const HQ = [47.4979, 19.0402] // Budapest
+const HQ = [47.4979, 19.0402]
 
 const MAP_ZOOM_DEFAULT = 6
 const MAP_ZOOM_SINGLE = 7
@@ -18,8 +18,11 @@ let knownUsers = new Set()
 // ================= UTIL =================
 
 function setText(id, value) {
+
     const el = document.getElementById(id)
+
     if (el) el.innerText = value
+
 }
 
 function getFlagEmoji(code) {
@@ -31,6 +34,22 @@ function getFlagEmoji(code) {
         .replace(/./g, char =>
             String.fromCodePoint(127397 + char.charCodeAt())
         )
+
+}
+
+
+// ================= DATE FIX =================
+// ISO datetime javítás JS-nek
+
+function parseISODate(value) {
+
+    if (!value) return null
+
+    // levágjuk a microsecond részt
+    const clean = value.split(".")[0]
+
+    return new Date(clean)
+
 }
 
 
@@ -53,6 +72,7 @@ function initMap() {
         .bindPopup("VPN Gateway (Budapest HQ)")
 
     loadVPNLocations()
+
 }
 
 
@@ -79,7 +99,7 @@ async function loadVPNLocations() {
             const marker = L.marker(location).addTo(map)
 
             marker.bindTooltip(
-                `<b>${session.username}</b><br>${flag} ${session.ip}`,
+                `<b>${session.username}</b><br>${flag}${session.ip}`,
                 {
                     direction: "top",
                     offset: [0, -10],
@@ -100,11 +120,14 @@ async function loadVPNLocations() {
 
         applyZoom(users, bounds)
 
-    } catch (err) {
+    }
+
+    catch (err) {
 
         console.error("VPN map error:", err)
 
     }
+
 }
 
 
@@ -163,7 +186,9 @@ async function updateDashboardStats() {
         setText("stat-today", data.today_sessions)
         setText("stat-topuser", data.top_user)
 
-    } catch (err) {
+    }
+
+    catch (err) {
 
         console.error("Dashboard stats error:", err)
 
@@ -213,7 +238,9 @@ async function refreshVPNSessions() {
 
         table.innerHTML = html
 
-    } catch (err) {
+    }
+
+    catch (err) {
 
         console.error("VPN table error:", err)
 
@@ -242,7 +269,9 @@ async function checkNewVPNUsers() {
 
         })
 
-    } catch (err) {
+    }
+
+    catch (err) {
 
         console.error("VPN alert error:", err)
 
@@ -257,6 +286,7 @@ function showVPNToast(session) {
     if (!container) return
 
     const toast = document.createElement("div")
+
     toast.className = "vpn-toast"
 
     toast.innerHTML =
@@ -273,12 +303,17 @@ function showVPNToast(session) {
 
 function updateDurations() {
 
+    const now = new Date()
+
     document.querySelectorAll(".duration").forEach(el => {
 
-        const start = new Date(el.dataset.start)
-        const now = new Date()
+        const start = parseISODate(el.dataset.start)
+
+        if (!start) return
 
         const diff = Math.floor((now - start) / 1000)
+
+        if (diff < 0) return
 
         const h = Math.floor(diff / 3600)
         const m = Math.floor((diff % 3600) / 60)
@@ -300,16 +335,6 @@ function updateClock() {
 
     const now = new Date()
 
-    const days = [
-        "Vasárnap",
-        "Hétfő",
-        "Kedd",
-        "Szerda",
-        "Csütörtök",
-        "Péntek",
-        "Szombat"
-    ]
-
     const time =
         String(now.getHours()).padStart(2, "0") + ":" +
         String(now.getMinutes()).padStart(2, "0") + ":" +
@@ -320,11 +345,8 @@ function updateClock() {
         String(now.getMonth() + 1).padStart(2, "0") + "." +
         String(now.getDate()).padStart(2, "0")
 
-    const day = days[now.getDay()]
-
     setText("clock-time", time)
     setText("clock-date", date)
-
 
 }
 
