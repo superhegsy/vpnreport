@@ -1,4 +1,6 @@
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.utils import timezone
 from .models import FortiGateConfig, VPNSession
 
