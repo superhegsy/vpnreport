@@ -112,6 +112,10 @@ def dashboard(request):
         "today_sessions": VPNSession.objects.filter(
             connected_at__date=now.date()
         ).count(),
+        "week_sessions": VPNSession.objects.filter(
+            connected_at__gte=now - timedelta(days=7)
+        ).count(),
+        "total_sessions": VPNSession.objects.count(),
         "top_user": (
             VPNSession.objects
             .values("username")
@@ -122,6 +126,53 @@ def dashboard(request):
     }
 
     return render(request, "dashboard.html", context)
+
+
+# ================= LIVE DASHBOARD API =================
+
+def live_dashboard(request):
+
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    now = timezone.now()
+
+    data = []
+
+    for s in sessions:
+
+        duration = int((now - s.connected_at).total_seconds())
+
+        data.append({
+            "username": s.username,
+            "ip": s.ip_address,
+            "duration": duration
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+# ================= USER HISTORY =================
+
+def user_history(request, username):
+
+    sessions = VPNSession.objects.filter(
+        username=username,
+        disconnected_at__isnull=False
+    ).order_by("-connected_at")
+
+    for s in sessions:
+
+        if s.duration_seconds:
+            s.duration = format_duration(s.duration_seconds)
+        else:
+            s.duration = "0m"
+
+    return render(request, "user_history.html", {
+        "username": username,
+        "sessions": sessions
+    })
 
 
 # ================= REPORT PAGES =================
@@ -182,28 +233,3 @@ def report_pdf(request, period):
     pisa.CreatePDF(html, dest=response)
 
     return response
-
-from django.http import JsonResponse
-from django.utils import timezone
-
-def live_dashboard(request):
-
-    sessions = VPNSession.objects.filter(
-        disconnected_at__isnull=True
-    )
-
-    now = timezone.now()
-
-    data = []
-
-    for s in sessions:
-
-        duration = int((now - s.connected_at).total_seconds())
-
-        data.append({
-            "username": s.username,
-            "ip": s.ip_address,
-            "duration": duration
-        })
-
-    return JsonResponse(data, safe=False)
