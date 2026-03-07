@@ -2,6 +2,7 @@
 // VPN DASHBOARD SCRIPT
 // =====================================================
 
+
 // ================= CONFIG =================
 
 const HQ = [47.4979, 19.0402] // Budapest
@@ -13,6 +14,7 @@ const MAP_ZOOM_MULTI = 6
 let map
 let knownUsers = new Set()
 
+
 // ================= UTIL =================
 
 function setText(id, value) {
@@ -21,6 +23,7 @@ function setText(id, value) {
 }
 
 function getFlagEmoji(code) {
+
     if (!code) return ""
 
     return code
@@ -30,12 +33,13 @@ function getFlagEmoji(code) {
         )
 }
 
+
 // ================= MAP =================
 
 function initMap() {
 
-    const mapEl = document.getElementById("map")
-    if (!mapEl) return
+    const mapElement = document.getElementById("map")
+    if (!mapElement) return
 
     map = L.map("map").setView(HQ, MAP_ZOOM_DEFAULT)
 
@@ -50,6 +54,7 @@ function initMap() {
 
     loadVPNLocations()
 }
+
 
 async function loadVPNLocations() {
 
@@ -96,9 +101,12 @@ async function loadVPNLocations() {
         applyZoom(users, bounds)
 
     } catch (err) {
+
         console.error("VPN map error:", err)
+
     }
 }
+
 
 function applyZoom(users, bounds) {
 
@@ -111,7 +119,9 @@ function applyZoom(users, bounds) {
             maxZoom: MAP_ZOOM_SINGLE
         })
 
-    } else if (users.length > 1) {
+    }
+
+    else if (users.length > 1) {
 
         bounds.push(HQ)
 
@@ -121,7 +131,9 @@ function applyZoom(users, bounds) {
         })
 
     }
+
 }
+
 
 function pulse(location) {
 
@@ -134,7 +146,9 @@ function pulse(location) {
     }).addTo(map)
 
     setTimeout(() => map.removeLayer(pulse), 2000)
+
 }
+
 
 // ================= DASHBOARD STATS =================
 
@@ -150,9 +164,13 @@ async function updateDashboardStats() {
         setText("stat-topuser", data.top_user)
 
     } catch (err) {
+
         console.error("Dashboard stats error:", err)
+
     }
+
 }
+
 
 // ================= VPN TABLE =================
 
@@ -196,9 +214,13 @@ async function refreshVPNSessions() {
         table.innerHTML = html
 
     } catch (err) {
+
         console.error("VPN table error:", err)
+
     }
+
 }
+
 
 // ================= VPN ALERT =================
 
@@ -221,9 +243,13 @@ async function checkNewVPNUsers() {
         })
 
     } catch (err) {
+
         console.error("VPN alert error:", err)
+
     }
+
 }
+
 
 function showVPNToast(session) {
 
@@ -239,9 +265,11 @@ function showVPNToast(session) {
     container.appendChild(toast)
 
     setTimeout(() => toast.remove(), 5000)
+
 }
 
-// ================= DURATION =================
+
+// ================= LIVE DURATION =================
 
 function updateDurations() {
 
@@ -262,7 +290,9 @@ function updateDurations() {
             String(s).padStart(2, "0")
 
     })
+
 }
+
 
 // ================= CLOCK =================
 
@@ -293,10 +323,11 @@ function updateClock() {
     const day = days[now.getDay()]
 
     setText("clock-time", time)
+    setText("clock-date", date)
+    setText("clock-day", day)
 
-    const dateEl = document.getElementById("clock-date")
-    if (dateEl) dateEl.innerText = `${date} • ${day}`
 }
+
 
 // ================= INIT =================
 
@@ -313,6 +344,7 @@ function init() {
     setInterval(checkNewVPNUsers, 5000)
     setInterval(updateDurations, 1000)
     setInterval(updateClock, 1000)
+
 }
 
 document.addEventListener("DOMContentLoaded", init)
