@@ -170,12 +170,12 @@ def active_vpn_sessions(request):
     ).order_by("-connected_at")
 
     data = []
+
     now = timezone.now()
 
     for s in sessions:
 
         delta = now - s.connected_at
-
         hours = delta.seconds // 3600
         minutes = (delta.seconds % 3600) // 60
 
@@ -189,6 +189,10 @@ def active_vpn_sessions(request):
             "ip": s.remote_ip,
             "country_code": s.country_code,
             "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
+
+            # EZ AZ ÚJ
+            "connected_at_iso": s.connected_at.isoformat(),
+
             "duration": duration
         })
 
