@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.urls import path
 from vpn import views
 
-
 urlpatterns = [
 
     # ADMIN
@@ -22,10 +21,6 @@ urlpatterns = [
     # PDF REPORT
     path('report/pdf/<str:period>/', views.report_pdf, name='report_pdf'),
 
-    # DASHBOARD API
+    # LIVE DASHBOARD
     path('api/live-dashboard/', views.live_dashboard, name='live_dashboard'),
-    path('api/dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
-    path('api/active-vpn/', views.active_vpn_sessions, name='active_vpn_sessions'),
-    path('api/vpn-locations/', views.vpn_locations, name='vpn_locations'),
-
 ]
