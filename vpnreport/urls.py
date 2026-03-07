@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from vpn import views
-from vpn.views import live_dashboard
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -40,5 +40,4 @@ urlpatterns = [
 
     # PDF REPORT
     path('report/pdf/<str:period>/', views.report_pdf, name='report_pdf'),
-    path("api/live-dashboard/", live_dashboard),
 ]
