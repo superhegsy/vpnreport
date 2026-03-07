@@ -3,6 +3,7 @@ const HQ = [47.4979, 19.0402]
 let map = null
 let markerLayer = null
 
+
 function getFlagEmoji(code){
 
     if(!code) return ""
@@ -11,6 +12,9 @@ function getFlagEmoji(code){
         c => String.fromCodePoint(127397 + c.charCodeAt())
     )
 }
+
+
+// ================= MAP =================
 
 function initMap(){
 
@@ -32,6 +36,7 @@ function initMap(){
 
     loadVPNLocations()
 }
+
 
 async function loadVPNLocations(){
 
@@ -72,64 +77,13 @@ async function loadVPNLocations(){
 
         })
 
-    }
-    catch(err){
+    }catch(err){
         console.warn("Map error",err)
     }
 }
 
-async function refreshVPNSessions(){
 
-    const table = document.getElementById("vpn-table")
-    if(!table) return
-
-    try{
-
-        const res = await fetch("/api/active-vpn/")
-        const sessions = await res.json()
-
-        let html = `
-        <tr>
-        <th>Felhasználó</th>
-        <th>Külső IP</th>
-        <th>Kapcsolódott</th>
-        <th>Duration</th>
-        </tr>
-        `
-
-        sessions.forEach(s => {
-
-            const flag = getFlagEmoji(s.country_code)
-
-            html += `
-            <tr>
-            <td>${s.username}</td>
-            <td>${flag} ${s.remote_ip}</td>
-            <td>${s.connected_at}</td>
-            <td>${formatDuration(s.duration)}</td>
-            </tr>
-            `
-        })
-
-        table.innerHTML = html
-
-    }
-    catch(err){
-        console.warn("Table error",err)
-    }
-}
-
-function formatDuration(sec){
-
-    if(!sec) return "0m"
-
-    const h = Math.floor(sec/3600)
-    const m = Math.floor((sec%3600)/60)
-
-    if(h>0) return `${h}h ${m}m`
-
-    return `${m}m`
-}
+// ================= STATS =================
 
 async function updateDashboardStats(){
 
@@ -138,25 +92,28 @@ async function updateDashboardStats(){
         const res = await fetch("/api/dashboard-stats/")
         const data = await res.json()
 
-        document.getElementById("stat-active").innerText = data.active_users
-        document.getElementById("stat-today").innerText = data.today_sessions
-        document.getElementById("stat-topuser").innerText = data.top_user
+        const active = document.getElementById("stat-active")
+        const today = document.getElementById("stat-today")
+        const top = document.getElementById("stat-topuser")
 
-    }
-    catch(err){
+        if(active) active.innerText = data.active_users
+        if(today) today.innerText = data.today_sessions
+        if(top) top.innerText = data.top_user
+
+    }catch(err){
         console.warn("Stats error",err)
     }
 }
 
+
+// ================= INIT =================
+
 function init(){
 
     initMap()
-
     updateDashboardStats()
-    refreshVPNSessions()
 
     setInterval(updateDashboardStats,5000)
-    setInterval(refreshVPNSessions,10000)
     setInterval(loadVPNLocations,10000)
 }
 
