@@ -8,24 +8,25 @@
 body{
 font-family: Arial, Helvetica, sans-serif;
 font-size:12px;
+margin:0;
 color:#000;
 }
 
-h1{
-font-size:22px;
-margin-bottom:5px;
+/* HEADER */
+
+.header{
+background:#f4c300;
+padding:14px;
+font-size:20px;
+font-weight:bold;
 }
 
-h2{
-font-size:16px;
-margin-bottom:20px;
-color:#555;
-}
+/* TABLE */
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:20px;
+margin-top:15px;
 }
 
 th, td{
@@ -43,10 +44,14 @@ tr:nth-child(even){
 background:#f5f5f5;
 }
 
+/* FOOTER */
+
 .footer{
-margin-top:30px;
+margin-top:25px;
+background:#4ea67d;
+color:white;
+padding:10px;
 font-size:11px;
-color:#777;
 }
 
 </style>
@@ -55,20 +60,20 @@ color:#777;
 
 <body>
 
-<h1>{{ title }}</h1>
+<div class="header">
 
-<h2>
-Riport dátuma: {{ now|date:"Y.m.d" }}
-</h2>
+{{ title }}
+
+</div>
 
 
 <table>
 
 <thead>
 <tr>
-<th>Felhasználó</th>
+<th>Felhasznalo</th>
 <th>Session</th>
-<th>Összes VPN idő</th>
+<th>Osszes VPN ido</th>
 </tr>
 </thead>
 
@@ -83,11 +88,24 @@ Riport dátuma: {{ now|date:"Y.m.d" }}
 <td>{{ u.total_sessions }}</td>
 
 <td>
+
 {% if u.total_duration %}
-{{ u.total_duration|floatformat:0 }} mp
+
+{% with sec=u.total_duration %}
+
+{% widthratio sec 3600 1 as hours %}
+{% widthratio sec 60 1 as minutes %}
+
+{{ hours }}h {{ minutes|add:"-"|add:hours|add:"*60" }}m
+
+{% endwith %}
+
 {% else %}
-0
+
+0m
+
 {% endif %}
+
 </td>
 
 </tr>
@@ -98,10 +116,11 @@ Riport dátuma: {{ now|date:"Y.m.d" }}
 
 </table>
 
+
 <div class="footer">
 
-JGK VPN riport rendszer
-Generálva: {{ now|date:"Y.m.d H:i" }}
+JGK VPN report rendszer
+Generalva: {{ now|date:"Y.m.d H:i" }}
 
 </div>
 
