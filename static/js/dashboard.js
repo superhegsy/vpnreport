@@ -1,5 +1,3 @@
-(function(){
-
 const HQ = [47.4979, 19.0402]
 
 let map = null
@@ -14,18 +12,7 @@ function getFlagEmoji(code){
 }
 
 
-function formatDuration(sec){
-
-    if(!sec) return "0m"
-
-    const h = Math.floor(sec/3600)
-    const m = Math.floor((sec%3600)/60)
-
-    if(h>0) return `${h}h ${m}m`
-
-    return `${m}m`
-}
-
+// ================= MAP =================
 
 function initMap(){
 
@@ -88,6 +75,8 @@ async function loadVPNLocations(){
 }
 
 
+// ================= TABLE =================
+
 async function refreshVPNSessions(){
 
     const table = document.getElementById("vpn-table")
@@ -109,12 +98,20 @@ async function refreshVPNSessions(){
 
         const flag = getFlagEmoji(s.country_code)
 
+        const hours = Math.floor(s.duration/3600)
+        const minutes = Math.floor((s.duration%3600)/60)
+
+        const duration =
+            hours > 0
+            ? `${hours}h ${minutes}m`
+            : `${minutes}m`
+
         html += `
         <tr>
         <td>${s.username}</td>
         <td>${flag} ${s.remote_ip}</td>
         <td>${s.connected_at}</td>
-        <td>${formatDuration(s.duration)}</td>
+        <td>${duration}</td>
         </tr>
         `
     })
@@ -122,6 +119,8 @@ async function refreshVPNSessions(){
     table.innerHTML = html
 }
 
+
+// ================= STATS =================
 
 async function updateDashboardStats(){
 
@@ -133,6 +132,8 @@ async function updateDashboardStats(){
     document.getElementById("stat-topuser").innerText = data.top_user
 }
 
+
+// ================= INIT =================
 
 function init(){
 
@@ -146,7 +147,4 @@ function init(){
     setInterval(loadVPNLocations,10000)
 }
 
-
 document.addEventListener("DOMContentLoaded",init)
-
-})();
