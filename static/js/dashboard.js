@@ -253,3 +253,41 @@ function showVPNToast(session){
 
 setInterval(checkNewVPNUsers, 5000)
 
+function refreshDashboard() {
+
+fetch("/api/live-dashboard/")
+.then(response => response.json())
+.then(data => {
+
+document.getElementById("stat-active").innerText = data.active_users;
+
+let table = document.querySelector("table");
+
+let rows = `
+<tr>
+<th>Felhasználó</th>
+<th>Külső IP</th>
+<th>Kapcsolódott</th>
+<th>Duration</th>
+</tr>
+`;
+
+data.sessions.forEach(s => {
+
+rows += `
+<tr>
+<td>${s.username}</td>
+<td>${s.ip}</td>
+<td>${s.connected_at}</td>
+<td>${s.duration}</td>
+</tr>
+`;
+
+});
+
+table.innerHTML = rows;
+
+});
+}
+
+setInterval(refreshDashboard, 10000);

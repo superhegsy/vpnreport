@@ -10,6 +10,9 @@ from xhtml2pdf import pisa
 
 from app.models import VPNSession
 
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import VPNSession
 
 # ======================================================
 # HELPER
@@ -375,3 +378,33 @@ def report_pdf(request, period):
     pisa.CreatePDF(html, dest=response)
 
     return response
+
+def live_dashboard(request):
+
+    active_sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    now = timezone.now()
+
+    data = []
+
+    for s in active_sessions:
+
+        delta = now - s.connected_at
+        minutes = int(delta.total_seconds() / 60)
+
+        data.append({
+            "username": s.username,
+            "ip": s.remote_ip,
+            "country": s.country_code,
+            "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
+            "duration": f"{minutes}m",
+            "lat": s.latitude,
+            "lon": s.longitude
+        })
+
+    return JsonResponse({
+        "active_users": active_sessions.count(),
+        "sessions": data
+    })
