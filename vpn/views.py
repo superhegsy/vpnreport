@@ -233,3 +233,21 @@ def report_pdf(request, period):
     pisa.CreatePDF(html, dest=response)
 
     return response
+
+
+def vpn_locations(request):
+
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    data = []
+
+    for s in sessions:
+        data.append({
+            "username": s.username,
+            "ip": s.ip_address,
+            "country": getattr(s, "country", None)
+        })
+
+    return JsonResponse(data, safe=False)
