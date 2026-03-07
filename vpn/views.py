@@ -309,3 +309,65 @@ def live_dashboard(request):
         "active_users": active_sessions.count(),
         "sessions": data
     })
+
+# ======================================================
+# PDF REPORT
+# ======================================================
+
+def report_pdf(request, period):
+
+    if period == "daily":
+        start = timezone.now().date()
+
+        sessions = VPNSession.objects.filter(
+            connected_at__date=start,
+            disconnected_at__isnull=False
+        )
+
+        title = "Napi VPN riport"
+
+    elif period == "weekly":
+
+        start = timezone.now() - timedelta(days=7)
+
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=start,
+            disconnected_at__isnull=False
+        )
+
+        title = "Heti VPN riport"
+
+    elif period == "monthly":
+
+        start = timezone.now() - timedelta(days=30)
+
+        sessions = VPNSession.objects.filter(
+            connected_at__gte=start,
+            disconnected_at__isnull=False
+        )
+
+        title = "Havi VPN riport"
+
+    users = (
+        sessions
+        .values("username")
+        .annotate(
+            total_sessions=Count("id"),
+            total_duration=Sum("duration_seconds")
+        )
+        .order_by("-total_duration")
+    )
+
+    template = get_template("report_pdf.html")
+
+    html = template.render({
+        "users": users,
+        "title": title
+    })
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{period}_vpn_report.pdf"'
+
+    pisa.CreatePDF(html, dest=response)
+
+    return response
