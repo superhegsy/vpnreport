@@ -1,180 +1,181 @@
-// =====================
+// =====================================================
+// VPN DASHBOARD SCRIPT
+// =====================================================
+
+
+
+// =====================================================
 // HQ KOORDINÁTÁK
-// =====================
+// =====================================================
 
 const HQ = [47.4979, 19.0402]; // Budapest
 
 
 
-// =====================
+// =====================================================
 // FLAG EMOJI
-// =====================
+// =====================================================
 
-function getFlagEmoji(countryCode){
+function getFlagEmoji(countryCode) {
 
-    if(!countryCode) return ""
+    if (!countryCode) return "";
 
     return countryCode
         .toUpperCase()
         .replace(/./g, char =>
             String.fromCodePoint(127397 + char.charCodeAt())
-        )
+        );
 }
 
 
 
-// =====================
-// TÉRKÉP
-// =====================
+// =====================================================
+// TÉRKÉP INITIALIZÁLÁS
+// =====================================================
 
-var map = L.map('map').setView(HQ, 7);
+const map = L.map("map").setView(HQ, 7);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    maxZoom:18
-}).addTo(map)
-
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18
+}).addTo(map);
 
 
 // HQ marker
 
 L.marker(HQ)
-.addTo(map)
-.bindPopup("VPN Gateway (Budapest HQ)")
+    .addTo(map)
+    .bindPopup("VPN Gateway (Budapest HQ)");
 
 
 
-// =====================
+// =====================================================
 // VPN USER LOKÁCIÓK
-// =====================
+// =====================================================
 
 fetch("/api/vpn-locations/")
-.then(response => response.json())
+.then(res => res.json())
 .then(data => {
 
-    data.forEach(function(session){
+    data.forEach(session => {
 
-        if(!session.lat || !session.lon) return
+        if (!session.lat || !session.lon) return;
 
-        var userLocation = [session.lat, session.lon]
+        const userLocation = [session.lat, session.lon];
+        const flag = getFlagEmoji(session.country_code);
 
-        var flag = getFlagEmoji(session.country_code)
+        // Marker
 
-        // USER MARKER
+        const marker = L.marker(userLocation).addTo(map);
 
-        L.marker(userLocation)
-        .addTo(map)
-        .bindPopup(
-            "<b>" + session.username + "</b>" +
-            "<br>IP: " + session.ip +
-            "<br>" + flag + " " + session.country
-        )
+        // Hover tooltip
 
-        // HQ → USER VONAL
+        marker.bindTooltip(
+            `<b>${session.username}</b><br>${flag} ${session.ip}`,
+            {
+                direction: "top",
+                offset: [0, -10],
+                opacity: 0.9
+            }
+        );
+
+        // HQ → USER kapcsolat vonal
 
         L.polyline([HQ, userLocation], {
             color: "#4ea67d",
             weight: 2,
             opacity: 0.7,
             dashArray: "5,10"
-        }).addTo(map)
+        }).addTo(map);
 
-        // villanás effekt
+        // Rövid villanás effekt
 
-        var circle = L.circle(userLocation, {
+        const pulse = L.circle(userLocation, {
             radius: 30000,
             color: "#d7a300",
             fillOpacity: 0.3
-        }).addTo(map)
+        }).addTo(map);
 
-        setTimeout(function(){
-            map.removeLayer(circle)
-        }, 2000)
+        setTimeout(() => map.removeLayer(pulse), 2000);
 
-    })
+    });
 
-})
+});
 
 
 
-// =====================
-// DASHBOARD STAT UPDATE
-// =====================
+// =====================================================
+// DASHBOARD STATISZTIKA FRISSÍTÉS
+// =====================================================
 
-function updateDashboard(){
+function updateDashboardStats() {
 
     fetch("/api/dashboard-stats/")
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
 
-        if(document.getElementById("stat-active"))
-            document.getElementById("stat-active").innerText = data.active_users
+        const active = document.getElementById("stat-active");
+        const today = document.getElementById("stat-today");
+        const total = document.getElementById("stat-total");
+        const top = document.getElementById("stat-topuser");
 
-        if(document.getElementById("stat-today"))
-            document.getElementById("stat-today").innerText = data.today_sessions
+        if (active) active.innerText = data.active_users;
+        if (today) today.innerText = data.today_sessions;
+        if (total) total.innerText = data.total_sessions;
+        if (top) top.innerText = data.top_user;
 
-        if(document.getElementById("stat-total"))
-            document.getElementById("stat-total").innerText = data.total_sessions
-
-        if(document.getElementById("stat-topuser"))
-            document.getElementById("stat-topuser").innerText = data.top_user
-
-    })
+    });
 
 }
 
-setInterval(updateDashboard, 5000)
+setInterval(updateDashboardStats, 5000);
 
 
 
-// =====================
+// =====================================================
 // ZÁSZLÓ AZ IP ELŐTT
-// =====================
+// =====================================================
 
-document.querySelectorAll(".ip-flag").forEach(function(el){
+document.querySelectorAll(".ip-flag").forEach(el => {
 
-    var code = el.dataset.code
+    const code = el.dataset.code;
 
-    if(code){
-        el.innerText = getFlagEmoji(code) + " "
+    if (code) {
+        el.innerText = getFlagEmoji(code) + " ";
     }
 
-})
+});
 
 
 
-// =====================
-// AUTO REFRESH VPN TABLE
-// =====================
+// =====================================================
+// VPN SESSION TABLE AUTO REFRESH
+// =====================================================
 
-async function refreshVPNSessions(){
+async function refreshVPNSessions() {
 
-    try{
+    try {
 
-        const response = await fetch("/api/active-vpn/")
-        const data = await response.json()
+        const response = await fetch("/api/active-vpn/");
+        const sessions = await response.json();
 
-        const table = document.querySelector("#vpn-table")
+        const table = document.querySelector("#vpn-table");
 
-        if(!table) return
+        if (!table) return;
 
-        let html = `
+        let rows = `
         <tr>
-        <th>Felhasználó</th>
-        <th>Külső IP</th>
-        <th>Kapcsolódott</th>
-        <th>Duration</th>
+            <th>Felhasználó</th>
+            <th>Külső IP</th>
+            <th>Kapcsolódott</th>
+            <th>Duration</th>
         </tr>
-        `
+        `;
 
-        data.forEach(function(s){
+        sessions.forEach(s => {
 
-            let flag = ""
+            const flag = s.country_code ? getFlagEmoji(s.country_code) + " " : "";
 
-            if(s.country_code){
-                flag = getFlagEmoji(s.country_code) + " "
-            }
-
-            html += `
+            rows += `
             <tr>
                 <td>${s.username}</td>
                 <td>${flag}${s.ip}</td>
@@ -183,107 +184,107 @@ async function refreshVPNSessions(){
                     ${s.duration}
                 </td>
             </tr>
-            `
+            `;
 
-        })
+        });
 
-        table.innerHTML = html
+        table.innerHTML = rows;
 
-    }catch(e){
-        console.log("VPN refresh error", e)
+    } catch (err) {
+
+        console.log("VPN refresh error:", err);
+
     }
 
 }
 
-setInterval(refreshVPNSessions, 10000)
+setInterval(refreshVPNSessions, 10000);
 
 
 
-// =====================
+// =====================================================
 // VPN CONNECT ALERT
-// =====================
+// =====================================================
 
-let knownUsers = new Set()
+let knownUsers = new Set();
 
-async function checkNewVPNUsers(){
+async function checkNewVPNUsers() {
 
-    try{
+    try {
 
-        const response = await fetch("/api/active-vpn/")
-        const sessions = await response.json()
+        const response = await fetch("/api/active-vpn/");
+        const sessions = await response.json();
 
-        sessions.forEach(function(s){
+        sessions.forEach(session => {
 
-            if(!knownUsers.has(s.username)){
+            if (!knownUsers.has(session.username)) {
 
-                knownUsers.add(s.username)
+                knownUsers.add(session.username);
 
-                showVPNToast(s)
+                showVPNToast(session);
 
             }
 
-        })
+        });
 
-    }catch(e){
-        console.log("VPN alert error", e)
+    } catch (err) {
+
+        console.log("VPN alert error:", err);
+
     }
 
 }
 
 
 
-function showVPNToast(session){
+function showVPNToast(session) {
 
-    const container = document.getElementById("vpn-toast-container")
+    const container = document.getElementById("vpn-toast-container");
 
-    if(!container) return
+    if (!container) return;
 
-    const toast = document.createElement("div")
+    const toast = document.createElement("div");
 
-    toast.className = "vpn-toast"
+    toast.className = "vpn-toast";
 
-    toast.innerHTML =
-        "🟢 <b>" + session.username +
-        "</b> connected from " + session.ip
+    toast.innerHTML = `🟢 <b>${session.username}</b> connected from ${session.ip}`;
 
-    container.appendChild(toast)
+    container.appendChild(toast);
 
-    setTimeout(function(){
-        toast.remove()
-    }, 5000)
+    setTimeout(() => toast.remove(), 5000);
 
 }
 
-setInterval(checkNewVPNUsers, 5000)
+setInterval(checkNewVPNUsers, 5000);
 
 
 
-// =====================
-// LIVE DURATION COUNTER
-// =====================
+// =====================================================
+// LIVE VPN DURATION COUNTER
+// =====================================================
 
-function updateDurations(){
+function updateDurations() {
 
-const elements = document.querySelectorAll(".duration")
+    const elements = document.querySelectorAll(".duration");
 
-elements.forEach(el => {
+    elements.forEach(el => {
 
-const start = new Date(el.dataset.start)
-const now = new Date()
+        const start = new Date(el.dataset.start);
+        const now = new Date();
 
-const diff = Math.floor((now - start) / 1000)
+        const diff = Math.floor((now - start) / 1000);
 
-const hours = Math.floor(diff / 3600)
-const minutes = Math.floor((diff % 3600) / 60)
-const seconds = diff % 60
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = diff % 60;
 
-el.innerText =
-String(hours).padStart(2,'0') + ":" +
-String(minutes).padStart(2,'0') + ":" +
-String(seconds).padStart(2,'0')
+        el.innerText =
+            String(hours).padStart(2, "0") + ":" +
+            String(minutes).padStart(2, "0") + ":" +
+            String(seconds).padStart(2, "0");
 
-})
+    });
 
 }
 
-setInterval(updateDurations, 1000)
+setInterval(updateDurations, 1000);
