@@ -10,9 +10,6 @@ from xhtml2pdf import pisa
 
 from app.models import VPNSession
 
-from django.http import JsonResponse
-from django.utils import timezone
-from .models import VPNSession
 
 # ======================================================
 # HELPER
@@ -52,10 +49,6 @@ def dashboard(request):
             s.duration = f"{hours}h {minutes}m"
         else:
             s.duration = f"{minutes}m"
-
-    # =========================
-    # STATISZTIKA
-    # =========================
 
     active_users = active_sessions.count()
 
@@ -139,6 +132,8 @@ def dashboard_stats(request):
         connected_at__date=timezone.now().date()
     ).count()
 
+    total_sessions = VPNSession.objects.count()
+
     week_sessions = VPNSession.objects.filter(
         connected_at__gte=timezone.now() - timedelta(days=7)
     ).count()
@@ -155,6 +150,7 @@ def dashboard_stats(request):
         "active_users": active_users,
         "today_sessions": today_sessions,
         "week_sessions": week_sessions,
+        "total_sessions": total_sessions,
         "top_user": top_user["username"] if top_user else "-"
     })
 
@@ -189,10 +185,7 @@ def active_vpn_sessions(request):
             "ip": s.remote_ip,
             "country_code": s.country_code,
             "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
-
-            # EZ AZ ÚJ
             "connected_at_iso": s.connected_at.isoformat(),
-
             "duration": duration
         })
 
@@ -304,84 +297,8 @@ def user_history(request, username):
 
 
 # ======================================================
-# PDF REPORT
+# LIVE DASHBOARD API
 # ======================================================
-
-def report_pdf(request, period):
-
-    period_hu = {
-        "daily": "Napi",
-        "weekly": "Heti",
-        "monthly": "Havi"
-    }.get(period, period)
-
-    now = timezone.now()
-
-    if period == "daily":
-
-        sessions = VPNSession.objects.filter(
-            connected_at__date=now.date(),
-            disconnected_at__isnull=False
-        )
-
-    elif period == "weekly":
-
-        start = now - timedelta(days=7)
-
-        sessions = VPNSession.objects.filter(
-            connected_at__gte=start,
-            disconnected_at__isnull=False
-        )
-
-    elif period == "monthly":
-
-        start = now - timedelta(days=30)
-
-        sessions = VPNSession.objects.filter(
-            connected_at__gte=start,
-            disconnected_at__isnull=False
-        )
-
-    else:
-
-        sessions = VPNSession.objects.none()
-
-    for s in sessions:
-        s.duration = format_duration(s.duration_seconds)
-
-    user_summary = (
-        sessions
-        .values("username")
-        .annotate(
-            total_sessions=Count("id"),
-            total_duration=Sum("duration_seconds")
-        )
-        .order_by("-total_duration")
-    )
-
-    for u in user_summary:
-        u["duration"] = format_duration(u["total_duration"])
-
-    top_user = user_summary[0]["username"] if user_summary else "-"
-
-    template = get_template("report_pdf.html")
-
-    html = template.render({
-        "sessions": sessions,
-        "user_summary": user_summary,
-        "period": period,
-        "period_hu": period_hu,
-        "now": now,
-        "top_user": top_user
-    })
-
-    response = HttpResponse(content_type="application/pdf")
-
-    response["Content-Disposition"] = f'attachment; filename="vpn_{period_hu}_riport.pdf"'
-
-    pisa.CreatePDF(html, dest=response)
-
-    return response
 
 def live_dashboard(request):
 
