@@ -3,7 +3,6 @@ const HQ = [47.4979, 19.0402]
 let map = null
 let markerLayer = null
 
-
 function getFlagEmoji(code){
 
     if(!code) return ""
@@ -11,14 +10,11 @@ function getFlagEmoji(code){
     return code.toUpperCase().replace(/./g,
         c => String.fromCodePoint(127397 + c.charCodeAt())
     )
-
 }
-
 
 function initMap(){
 
     const mapElement = document.getElementById("map")
-
     if(!mapElement) return
 
     map = L.map("map").setView(HQ,6)
@@ -35,10 +31,7 @@ function initMap(){
         .bindPopup("VPN Gateway (Budapest HQ)")
 
     loadVPNLocations()
-
 }
-
-
 
 async function loadVPNLocations(){
 
@@ -47,9 +40,7 @@ async function loadVPNLocations(){
         const res = await fetch("/api/vpn-locations/")
         const sessions = await res.json()
 
-        if(markerLayer){
-            markerLayer.clearLayers()
-        }
+        markerLayer.clearLayers()
 
         L.marker(HQ)
             .addTo(markerLayer)
@@ -82,21 +73,14 @@ async function loadVPNLocations(){
         })
 
     }
-
     catch(err){
-
-        console.warn("Map load error",err)
-
+        console.warn("Map error",err)
     }
-
 }
-
-
 
 async function refreshVPNSessions(){
 
     const table = document.getElementById("vpn-table")
-
     if(!table) return
 
     try{
@@ -122,7 +106,7 @@ async function refreshVPNSessions(){
             <td>${s.username}</td>
             <td>${flag} ${s.remote_ip}</td>
             <td>${s.connected_at}</td>
-            <td>${s.duration}</td>
+            <td>${formatDuration(s.duration)}</td>
             </tr>
             `
         })
@@ -130,16 +114,22 @@ async function refreshVPNSessions(){
         table.innerHTML = html
 
     }
-
     catch(err){
-
-        console.warn("VPN table error",err)
-
+        console.warn("Table error",err)
     }
-
 }
 
+function formatDuration(sec){
 
+    if(!sec) return "0m"
+
+    const h = Math.floor(sec/3600)
+    const m = Math.floor((sec%3600)/60)
+
+    if(h>0) return `${h}h ${m}m`
+
+    return `${m}m`
+}
 
 async function updateDashboardStats(){
 
@@ -153,16 +143,10 @@ async function updateDashboardStats(){
         document.getElementById("stat-topuser").innerText = data.top_user
 
     }
-
     catch(err){
-
-        console.warn("Stats update error",err)
-
+        console.warn("Stats error",err)
     }
-
 }
-
-
 
 function init(){
 
@@ -174,7 +158,6 @@ function init(){
     setInterval(updateDashboardStats,5000)
     setInterval(refreshVPNSessions,10000)
     setInterval(loadVPNLocations,10000)
-
 }
 
 document.addEventListener("DOMContentLoaded",init)
