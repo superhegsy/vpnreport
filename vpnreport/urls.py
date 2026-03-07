@@ -21,6 +21,11 @@ urlpatterns = [
     # PDF REPORT
     path('report/pdf/<str:period>/', views.report_pdf, name='report_pdf'),
 
-    # LIVE DASHBOARD API
+    # LIVE DASHBOARD
     path('api/live-dashboard/', views.live_dashboard, name='live_dashboard'),
+
+    # DASHBOARD API
+    path('api/vpn-locations/', views.vpn_locations),
+    path('api/active-vpn/', views.active_vpn_sessions),
+    path('api/dashboard-stats/', views.dashboard_stats),
 ]
