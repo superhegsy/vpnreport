@@ -182,3 +182,28 @@ def report_pdf(request, period):
     pisa.CreatePDF(html, dest=response)
 
     return response
+
+from django.http import JsonResponse
+from django.utils import timezone
+
+def live_dashboard(request):
+
+    sessions = VPNSession.objects.filter(
+        disconnected_at__isnull=True
+    )
+
+    now = timezone.now()
+
+    data = []
+
+    for s in sessions:
+
+        duration = int((now - s.connected_at).total_seconds())
+
+        data.append({
+            "username": s.username,
+            "ip": s.ip_address,
+            "duration": duration
+        })
+
+    return JsonResponse(data, safe=False)
