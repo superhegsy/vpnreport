@@ -59,7 +59,6 @@ fetch("/api/vpn-locations/")
 
         var flag = getFlagEmoji(session.country_code)
 
-
         // USER MARKER
 
         L.marker(userLocation)
@@ -70,7 +69,6 @@ fetch("/api/vpn-locations/")
             "<br>" + flag + " " + session.country
         )
 
-
         // HQ → USER VONAL
 
         L.polyline([HQ, userLocation], {
@@ -80,8 +78,7 @@ fetch("/api/vpn-locations/")
             dashArray: "5,10"
         }).addTo(map)
 
-
-        // rövid villanás effekt
+        // villanás effekt
 
         var circle = L.circle(userLocation, {
             radius: 30000,
@@ -143,6 +140,8 @@ document.querySelectorAll(".ip-flag").forEach(function(el){
 
 })
 
+
+
 // =====================
 // AUTO REFRESH VPN TABLE
 // =====================
@@ -180,7 +179,9 @@ async function refreshVPNSessions(){
                 <td>${s.username}</td>
                 <td>${flag}${s.ip}</td>
                 <td>${s.connected_at}</td>
-                <td>${s.duration}</td>
+                <td class="duration" data-start="${s.connected_at_iso}">
+                    ${s.duration}
+                </td>
             </tr>
             `
 
@@ -195,6 +196,8 @@ async function refreshVPNSessions(){
 }
 
 setInterval(refreshVPNSessions, 10000)
+
+
 
 // =====================
 // VPN CONNECT ALERT
@@ -253,67 +256,34 @@ function showVPNToast(session){
 
 setInterval(checkNewVPNUsers, 5000)
 
-function refreshDashboard() {
 
-fetch("/api/live-dashboard/")
-.then(response => response.json())
-.then(data => {
 
-document.getElementById("stat-active").innerText = data.active_users;
+// =====================
+// LIVE DURATION COUNTER
+// =====================
 
-let table = document.querySelector("table");
+function updateDurations(){
 
-let rows = `
-<tr>
-<th>Felhasználó</th>
-<th>Külső IP</th>
-<th>Kapcsolódott</th>
-<th>Duration</th>
-</tr>
-`;
-
-data.sessions.forEach(s => {
-
-rows += `
-<tr>
-<td>${s.username}</td>
-<td>${s.ip}</td>
-<td>${s.connected_at}</td>
-<td>${s.duration}</td>
-</tr>
-`;
-
-});
-
-table.innerHTML = rows;
-
-});
-}
-
-setInterval(refreshDashboard, 10000);
-
-function updateDurations() {
-
-const elements = document.querySelectorAll(".duration");
+const elements = document.querySelectorAll(".duration")
 
 elements.forEach(el => {
 
-const start = new Date(el.dataset.start);
-const now = new Date();
+const start = new Date(el.dataset.start)
+const now = new Date()
 
-const diff = Math.floor((now - start) / 1000);
+const diff = Math.floor((now - start) / 1000)
 
-const hours = Math.floor(diff / 3600);
-const minutes = Math.floor((diff % 3600) / 60);
-const seconds = diff % 60;
+const hours = Math.floor(diff / 3600)
+const minutes = Math.floor((diff % 3600) / 60)
+const seconds = diff % 60
 
 el.innerText =
 String(hours).padStart(2,'0') + ":" +
 String(minutes).padStart(2,'0') + ":" +
-String(seconds).padStart(2,'0');
+String(seconds).padStart(2,'0')
 
-});
+})
 
 }
 
-setInterval(updateDurations, 1000);
+setInterval(updateDurations, 1000)

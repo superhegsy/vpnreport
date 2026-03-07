@@ -166,3 +166,20 @@ font-size:14px;
 .menu-btn:hover{
 background:#3d8f69;
 }
+
+/* VPN session duration colors */
+
+.vpn-short {
+color:#2ecc71;
+font-weight:600;
+}
+
+.vpn-medium {
+color:#f1c40f;
+font-weight:600;
+}
+
+.vpn-long {
+color:#e74c3c;
+font-weight:700;
+}
