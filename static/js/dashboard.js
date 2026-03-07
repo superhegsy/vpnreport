@@ -2,17 +2,20 @@
 // VPN DASHBOARD SCRIPT
 // =====================================================
 
+
 // =====================================================
 // CONFIG
 // =====================================================
 
-const HQ = [47.4979, 19.0402]; // Budapest
+const HQ = [47.4979, 19.0402] // Budapest
+
 const MAP_ZOOM_DEFAULT = 6
 const MAP_ZOOM_SINGLE = 7
 const MAP_ZOOM_MULTI = 6
 
 let map
 let knownUsers = new Set()
+
 
 // =====================================================
 // FLAG EMOJI
@@ -30,17 +33,19 @@ String.fromCodePoint(127397 + char.charCodeAt())
 
 }
 
+
 // =====================================================
 // MAP INIT
 // =====================================================
 
 function initMap(){
 
-map = L.map("map").setView(HQ, MAP_ZOOM_DEFAULT)
+map = L.map("map").setView(HQ,MAP_ZOOM_DEFAULT)
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-maxZoom:18
-}).addTo(map)
+L.tileLayer(
+"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+{maxZoom:18}
+).addTo(map)
 
 L.marker(HQ)
 .addTo(map)
@@ -50,16 +55,17 @@ loadVPNLocations()
 
 }
 
+
 // =====================================================
-// LOAD VPN LOCATIONS
+// VPN LOCATION LOAD
 // =====================================================
 
 async function loadVPNLocations(){
 
 try{
 
-const response = await fetch("/api/vpn-locations/")
-const sessions = await response.json()
+const res = await fetch("/api/vpn-locations/")
+const sessions = await res.json()
 
 const bounds = []
 const users = []
@@ -68,13 +74,13 @@ sessions.forEach(session=>{
 
 if(!session.lat || !session.lon) return
 
-const location = [session.lat,session.lon]
-const flag = getFlagEmoji(session.country_code)
+const location=[session.lat,session.lon]
+const flag=getFlagEmoji(session.country_code)
 
 users.push(location)
 bounds.push(location)
 
-const marker = L.marker(location).addTo(map)
+const marker=L.marker(location).addTo(map)
 
 marker.bindTooltip(
 `<b>${session.username}</b><br>${flag} ${session.ip}`,
@@ -92,25 +98,26 @@ opacity:0.7,
 dashArray:"5,10"
 }).addTo(map)
 
-pulseEffect(location)
+pulse(location)
 
 })
 
-applySmartZoom(users,bounds)
+applyZoom(users,bounds)
 
 }catch(err){
 
-console.error("VPN location error:",err)
+console.error("VPN map error:",err)
 
 }
 
 }
+
 
 // =====================================================
 // SMART ZOOM
 // =====================================================
 
-function applySmartZoom(users,bounds){
+function applyZoom(users,bounds){
 
 if(users.length===1){
 
@@ -134,13 +141,14 @@ maxZoom:MAP_ZOOM_MULTI
 
 }
 
+
 // =====================================================
-// PULSE EFFECT
+// MAP PULSE EFFECT
 // =====================================================
 
-function pulseEffect(location){
+function pulse(location){
 
-const pulse = L.circle(location,{
+const pulse=L.circle(location,{
 radius:30000,
 color:"#d7a300",
 fillOpacity:0.3
@@ -150,6 +158,7 @@ setTimeout(()=>map.removeLayer(pulse),2000)
 
 }
 
+
 // =====================================================
 // DASHBOARD STATS
 // =====================================================
@@ -158,12 +167,11 @@ async function updateDashboardStats(){
 
 try{
 
-const response = await fetch("/api/dashboard-stats/")
-const data = await response.json()
+const res = await fetch("/api/dashboard-stats/")
+const data = await res.json()
 
 setText("stat-active",data.active_users)
 setText("stat-today",data.today_sessions)
-setText("stat-total",data.total_sessions)
 setText("stat-topuser",data.top_user)
 
 }catch(err){
@@ -174,16 +182,17 @@ console.error("Dashboard stats error:",err)
 
 }
 
+
 // =====================================================
-// TABLE REFRESH
+// VPN TABLE REFRESH
 // =====================================================
 
 async function refreshVPNSessions(){
 
 try{
 
-const response = await fetch("/api/active-vpn/")
-const sessions = await response.json()
+const res = await fetch("/api/active-vpn/")
+const sessions = await res.json()
 
 const table = document.querySelector("#vpn-table")
 if(!table) return
@@ -218,11 +227,12 @@ table.innerHTML = html
 
 }catch(err){
 
-console.error("VPN table refresh error:",err)
+console.error("VPN table error:",err)
 
 }
 
 }
+
 
 // =====================================================
 // VPN CONNECT ALERT
@@ -232,8 +242,8 @@ async function checkNewVPNUsers(){
 
 try{
 
-const response = await fetch("/api/active-vpn/")
-const sessions = await response.json()
+const res = await fetch("/api/active-vpn/")
+const sessions = await res.json()
 
 sessions.forEach(session=>{
 
@@ -254,12 +264,13 @@ console.error("VPN alert error:",err)
 
 }
 
+
 function showVPNToast(session){
 
-const container = document.getElementById("vpn-toast-container")
+const container=document.getElementById("vpn-toast-container")
 if(!container) return
 
-const toast = document.createElement("div")
+const toast=document.createElement("div")
 toast.className="vpn-toast"
 
 toast.innerHTML=
@@ -271,6 +282,7 @@ setTimeout(()=>toast.remove(),5000)
 
 }
 
+
 // =====================================================
 // LIVE DURATION COUNTER
 // =====================================================
@@ -279,10 +291,10 @@ function updateDurations(){
 
 document.querySelectorAll(".duration").forEach(el=>{
 
-const start = new Date(el.dataset.start)
-const now = new Date()
+const start=new Date(el.dataset.start)
+const now=new Date()
 
-const diff = Math.floor((now-start)/1000)
+const diff=Math.floor((now-start)/1000)
 
 const hours=Math.floor(diff/3600)
 const minutes=Math.floor((diff%3600)/60)
@@ -297,16 +309,56 @@ String(seconds).padStart(2,"0")
 
 }
 
+
+// =====================================================
+// CLOCK
+// =====================================================
+
+function updateClock(){
+
+const now=new Date()
+
+const days=[
+"Vasárnap",
+"Hétfő",
+"Kedd",
+"Szerda",
+"Csütörtök",
+"Péntek",
+"Szombat"
+]
+
+const time =
+String(now.getHours()).padStart(2,"0")+":"+
+String(now.getMinutes()).padStart(2,"0")+":"+
+String(now.getSeconds()).padStart(2,"0")
+
+const date =
+now.getFullYear()+"."+
+String(now.getMonth()+1).padStart(2,"0")+"."+
+String(now.getDate()).padStart(2,"0")
+
+const day=days[now.getDay()]
+
+setText("clock-time",time)
+
+const dateEl=document.getElementById("clock-date")
+if(dateEl) dateEl.innerText=`${date} • ${day}`
+
+}
+
+
 // =====================================================
 // UTIL
 // =====================================================
 
 function setText(id,value){
 
-const el = document.getElementById(id)
-if(el) el.innerText = value
+const el=document.getElementById(id)
+if(el) el.innerText=value
 
 }
+
 
 // =====================================================
 // INIT
@@ -318,11 +370,13 @@ initMap()
 
 updateDashboardStats()
 refreshVPNSessions()
+updateClock()
 
 setInterval(updateDashboardStats,5000)
 setInterval(refreshVPNSessions,10000)
 setInterval(checkNewVPNUsers,5000)
 setInterval(updateDurations,1000)
+setInterval(updateClock,1000)
 
 }
 
