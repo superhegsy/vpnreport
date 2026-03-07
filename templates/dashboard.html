@@ -11,20 +11,21 @@
 
 <div class="stats">
 
+    <!-- Aktív VPN user -->
+
     <div class="stat">
         <h3>Aktív VPN user</h3>
         <h1 id="stat-active">{{ active_users }}</h1>
     </div>
+
+    <!-- Mai VPN session -->
 
     <div class="stat">
         <h3>Mai VPN session</h3>
         <h1 id="stat-today">{{ today_sessions }}</h1>
     </div>
 
-    <div class="stat">
-        <h3>Összes VPN session</h3>
-        <h1 id="stat-total">{{ total_sessions }}</h1>
-    </div>
+    <!-- Top VPN user -->
 
     <div class="stat">
         <h3>Top VPN user</h3>
@@ -37,7 +38,16 @@
         </h1>
     </div>
 
+    <!-- Óra -->
+
+    <div class="stat">
+        <h3>Idő</h3>
+        <h1 id="clock-time">--:--:--</h1>
+        <div id="clock-date">----</div>
+    </div>
+
 </div>
+
 
 
 <!-- ======================
@@ -48,7 +58,7 @@
 
 <h4>Aktív VPN kapcsolatok</h4>
 
-<table>
+<table id="vpn-table">
 
 <tr>
 <th>Felhasználó</th>
@@ -91,6 +101,7 @@ Nincs aktív VPN kapcsolat
 </div>
 
 
+
 <!-- ======================
      VPN MAP
 ====================== -->
@@ -104,11 +115,18 @@ Nincs aktív VPN kapcsolat
 </div>
 
 
+
 <!-- ======================
      NOTIFICATIONS
 ====================== -->
 
 <div id="vpn-toast-container"></div>
+
+
+
+<!-- ======================
+     JAVASCRIPT
+====================== -->
 
 <script src="{% static 'js/dashboard.js' %}"></script>
 
