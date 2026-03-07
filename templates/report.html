@@ -1,28 +1,27 @@
 {% extends "base.html" %}
 {% load static %}
-{% load duration %}
 
 {% block content %}
 
-<div class="panel">
-
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-
-<h2 style="margin:0;">{{ title }}</h2>
-
-<a href="/report/pdf/{{ period }}/" class="menu-btn">
-⬇ PDF letöltése
-</a>
-
+<div class="report-header">
+    <h2>{{ title }}</h2>
 </div>
 
-<table>
+<div class="report-actions">
+    <a href="/report/pdf/{{ period }}/" class="menu-btn">
+        PDF letöltése
+    </a>
+</div>
+
+<div class="panel">
+
+<table class="report-table">
 
 <thead>
 <tr>
-<th>Felhasználó</th>
-<th>Session</th>
-<th>Összes VPN idő</th>
+    <th>Felhasználó</th>
+    <th>Session</th>
+    <th>Összes VPN idő</th>
 </tr>
 </thead>
 
@@ -32,27 +31,27 @@
 
 <tr>
 
-<td>
-<a href="{% url 'user_history' u.username %}">
-{{ u.username }}
-</a>
+<td class="user-cell">
+    <a href="{% url 'user_history' u.username %}">
+        {{ u.username }}
+    </a>
 </td>
 
-<td>
-{{ u.total_sessions }}
+<td class="session-cell">
+    {{ u.total_sessions }}
 </td>
 
-<td>
-{{ u.total_duration|duration_format }}
+<td class="duration-cell">
+    {{ u.duration }}
 </td>
 
 </tr>
 
 {% empty %}
 
-<tr>
-<td colspan="3" style="text-align:center;padding:20px;">
-Nincs adat
+<tr class="empty-row">
+<td colspan="3">
+    Nincs adat
 </td>
 </tr>
 
