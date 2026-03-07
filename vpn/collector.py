@@ -1,15 +1,16 @@
 import requests
 import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.utils import timezone
 from .models import FortiGateConfig, VPNSession
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def collect_fortigate_sessions():
 
     configs = FortiGateConfig.objects.filter(enabled=True)
 
-    active_users = []
+    active_sessions = []
 
     for cfg in configs:
 
@@ -28,7 +29,7 @@ def collect_fortigate_sessions():
         except Exception as e:
 
             print("FortiGate connection error:", e)
-            return
+            continue
 
         tunnels = data.get("results", [])
 
@@ -40,40 +41,32 @@ def collect_fortigate_sessions():
 
             username = tunnel.get("user")
             remote_ip = tunnel.get("rgwy")
+            vpn_ip = tunnel.get("tun_id")
 
             if not username:
                 continue
 
-            active_users.append(username)
+            # az aktív session kulcs
+            session_key = f"{username}_{vpn_ip}"
+            active_sessions.append(session_key)
 
-            vpn_ip = tunnel.get("tun_id")
-
+            # nézzük van-e már aktív session
             session = VPNSession.objects.filter(
                 username=username,
-                remote_ip=remote_ip,
                 vpn_ip=vpn_ip,
                 disconnected_at__isnull=True
             ).first()
 
             if not session:
 
-                existing = VPNSession.objects.filter(
-                    username=user,
-                    remote_ip=ip,
-                    disconnected_at__isnull=True
-                ).first()
+                VPNSession.objects.create(
+                    username=username,
+                    remote_ip=remote_ip,
+                    vpn_ip=vpn_ip,
+                    connected_at=timezone.now()
+                )
 
-                if not existing:
-                    VPNSession.objects.create(
-                        username=user,
-                        remote_ip=ip,
-                        connected_at=timezone.now()
-                    )
-
-                    print(f"New VPN session: {user}")
-
-                print(f"New VPN session: {username}")
-
+                print(f"New VPN session: {username} ({remote_ip})")
 
     # =========================
     # DISCONNECT DETECTION
@@ -83,9 +76,16 @@ def collect_fortigate_sessions():
 
     for session in open_sessions:
 
-        if session.username not in active_users:
+        key = f"{session.username}_{session.vpn_ip}"
+
+        if key not in active_sessions:
 
             session.disconnected_at = timezone.now()
+
+            if session.connected_at:
+                delta = session.disconnected_at - session.connected_at
+                session.duration_seconds = int(delta.total_seconds())
+
             session.save()
 
             print(f"VPN disconnected: {session.username}")
