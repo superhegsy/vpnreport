@@ -57,11 +57,20 @@ def collect_fortigate_sessions():
 
             if not session:
 
-                VPNSession.objects.create(
-                    username=username,
-                    remote_ip=remote_ip,
-                    connected_at=timezone.now()
-                )
+                existing = VPNSession.objects.filter(
+                    username=user,
+                    remote_ip=ip,
+                    disconnected_at__isnull=True
+                ).first()
+
+                if not existing:
+                    VPNSession.objects.create(
+                        username=user,
+                        remote_ip=ip,
+                        connected_at=timezone.now()
+                    )
+
+                    print(f"New VPN session: {user}")
 
                 print(f"New VPN session: {username}")
 
