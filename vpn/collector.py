@@ -2,13 +2,12 @@ import requests
 import urllib3
 import geoip2.database
 import os
+import time
 
 from django.utils import timezone
 from app.models import FortiGateConfig, VPNSession
 
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 # =========================
 # GEOIP INIT
@@ -21,8 +20,58 @@ geo_reader = None
 
 if os.path.exists(GEOIP_DB):
     geo_reader = geoip2.database.Reader(GEOIP_DB)
+    print("GeoIP database loaded")
 else:
     print("GeoIP database not found:", GEOIP_DB)
+
+
+# =========================
+# GEOIP LOOKUP
+# =========================
+
+def geo_lookup(ip):
+
+    if not geo_reader:
+        return None, None, None, None
+
+    try:
+
+        geo = geo_reader.city(ip)
+
+        country = geo.country.name
+        country_code = geo.country.iso_code
+        latitude = geo.location.latitude
+        longitude = geo.location.longitude
+
+        return country, country_code, latitude, longitude
+
+    except Exception:
+        return None, None, None, None
+
+
+# =========================
+# FETCH FORTIGATE SESSIONS
+# =========================
+
+def fetch_sessions(cfg):
+
+    url = f"https://{cfg.host}:{cfg.port}/api/v2/monitor/vpn/ipsec"
+
+    headers = {
+        "Authorization": f"Bearer {cfg.api_token}"
+    }
+
+    try:
+
+        r = requests.get(url, headers=headers, verify=False, timeout=10)
+        r.raise_for_status()
+
+        return r.json().get("results", [])
+
+    except Exception as e:
+
+        print(f"FortiGate connection error ({cfg.host}):", e)
+        return []
 
 
 # =========================
@@ -37,28 +86,10 @@ def collect_fortigate_sessions():
 
     for cfg in configs:
 
-        url = f"https://{cfg.host}:{cfg.port}/api/v2/monitor/vpn/ipsec"
-
-        headers = {
-            "Authorization": f"Bearer {cfg.api_token}"
-        }
-
-        try:
-
-            r = requests.get(url, headers=headers, verify=False, timeout=10)
-            r.raise_for_status()
-            data = r.json()
-
-        except Exception as e:
-
-            print("FortiGate connection error:", e)
-            continue
-
-        tunnels = data.get("results", [])
+        tunnels = fetch_sessions(cfg)
 
         for tunnel in tunnels:
 
-            # csak dialup (remote user VPN)
             if tunnel.get("type") != "dialup":
                 continue
 
@@ -72,33 +103,7 @@ def collect_fortigate_sessions():
             session_key = f"{username}_{remote_ip}"
             active_sessions.append(session_key)
 
-            # =========================
-            # GEOIP LOOKUP
-            # =========================
-
-            country = None
-            country_code = None
-            latitude = None
-            longitude = None
-
-            if geo_reader:
-
-                try:
-
-                    geo = geo_reader.city(remote_ip)
-
-                    country = geo.country.name
-                    country_code = geo.country.iso_code
-
-                    latitude = geo.location.latitude
-                    longitude = geo.location.longitude
-
-                except Exception:
-                    pass
-
-            # =========================
-            # CHECK EXISTING SESSION
-            # =========================
+            country, country_code, latitude, longitude = geo_lookup(remote_ip)
 
             session = VPNSession.objects.filter(
                 username=username,
@@ -121,9 +126,14 @@ def collect_fortigate_sessions():
 
                 print(f"New VPN session: {username} ({remote_ip})")
 
-    # =========================
-    # DISCONNECT DETECTION
-    # =========================
+    detect_disconnects(active_sessions)
+
+
+# =========================
+# DISCONNECT DETECTION
+# =========================
+
+def detect_disconnects(active_sessions):
 
     open_sessions = VPNSession.objects.filter(disconnected_at__isnull=True)
 
@@ -136,9 +146,28 @@ def collect_fortigate_sessions():
             session.disconnected_at = timezone.now()
 
             if session.connected_at:
+
                 delta = session.disconnected_at - session.connected_at
                 session.duration_seconds = int(delta.total_seconds())
 
             session.save()
 
             print(f"VPN disconnected: {session.username}")
+
+
+# =========================
+# RUN LOOP
+# =========================
+
+def run():
+
+    print("VPN collector started")
+
+    while True:
+
+        try:
+            collect_fortigate_sessions()
+        except Exception as e:
+            print("Collector error:", e)
+
+        time.sleep(5)
