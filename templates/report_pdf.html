@@ -1,106 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
+{% extends "base.html" %}
+{% load static %}
 
-<style>
+{% block content %}
 
-body{
-font-family: Arial, Helvetica, sans-serif;
-font-size:12px;
-margin:0;
-padding:30px;
-color:#000;
-}
+<h2>{{ title }}</h2>
 
-/* HEADER */
-
-.header{
-background:#f4c300;
-padding:14px;
-font-size:20px;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-/* DATE */
-
-.report-date{
-margin-bottom:20px;
-font-size:13px;
-color:#555;
-}
-
-/* TABLE */
-
-table{
-width:100%;
-border-collapse:collapse;
-table-layout:fixed;
-}
-
-th, td{
-padding:9px;
-border-bottom:1px solid #ddd;
-}
-
-th{
-background:#4ea67d;
-color:white;
-text-align:left;
-}
-
-/* COLUMN WIDTH */
-
-.col-user{
-width:50%;
-}
-
-.col-session{
-width:20%;
-text-align:center;
-}
-
-.col-duration{
-width:30%;
-text-align:center;
-}
-
-tr:nth-child(even){
-background:#f5f5f5;
-}
-
-/* FOOTER */
-
-.footer{
-margin-top:30px;
-background:#4ea67d;
-color:white;
-padding:10px;
-font-size:11px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="header">
-{{ title }}
+<div style="margin-bottom:20px;">
+<a href="/report/pdf/{{ period }}/" class="menu-btn">
+PDF letöltése
+</a>
 </div>
 
-<div class="report-date">
-Riport dátuma: {{ now|date:"Y.m.d" }}
-</div>
+<div class="panel">
 
 <table>
 
 <thead>
 <tr>
-<th class="col-user">Felhasznalo</th>
-<th class="col-session">Session</th>
-<th class="col-duration">Osszes VPN ido</th>
+<th>Felhasználó</th>
+<th>Session</th>
+<th>Összes VPN idő</th>
 </tr>
 </thead>
 
@@ -110,18 +29,28 @@ Riport dátuma: {{ now|date:"Y.m.d" }}
 
 <tr>
 
-<td class="col-user">
+<td>
+<a href="{% url 'user_history' u.username %}">
 {{ u.username }}
+</a>
 </td>
 
-<td class="col-session">
+<td>
 {{ u.total_sessions }}
 </td>
 
-<td class="col-duration">
+<td>
 {{ u.duration }}
 </td>
 
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3" style="text-align:center;padding:20px;">
+Nincs adat
+</td>
 </tr>
 
 {% endfor %}
@@ -130,9 +59,6 @@ Riport dátuma: {{ now|date:"Y.m.d" }}
 
 </table>
 
-<div class="footer">
-JGK VPN riport rendszer – Generalva: {{ now|date:"Y.m.d H:i" }}
 </div>
 
-</body>
-</html>
+{% endblock %}
