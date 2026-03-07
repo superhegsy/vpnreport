@@ -48,29 +48,55 @@ async function loadVPNLocations(){
         .addTo(markerLayer)
         .bindPopup("VPN Gateway (Budapest HQ)")
 
+    // --- csoportosítás koordináta szerint ---
+    const groups = {}
+
     sessions.forEach(s => {
 
         if(!s.latitude || !s.longitude) return
 
-        const location = [s.latitude, s.longitude]
+        const key = `${s.latitude},${s.longitude}`
 
-        const flag = getFlagEmoji(s.country_code)
+        if(!groups[key]) groups[key] = []
+        groups[key].push(s)
 
-        const marker = L.marker(location)
+    })
 
-        marker.bindTooltip(
-            `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
-            {direction:"top"}
-        )
+    Object.keys(groups).forEach(key => {
 
-        marker.addTo(markerLayer)
+        const users = groups[key]
+        const [baseLat, baseLon] = key.split(",").map(Number)
 
-        L.polyline([HQ,location],{
-            color:"#4ea67d",
-            weight:2,
-            opacity:0.7,
-            dashArray:"5,10"
-        }).addTo(markerLayer)
+        users.forEach((s,i) => {
+
+            // körkörös offset ha több user ugyanott
+            const angle = (i / users.length) * (2 * Math.PI)
+            const offset = 0.02
+
+            const lat = baseLat + Math.sin(angle) * offset
+            const lon = baseLon + Math.cos(angle) * offset
+
+            const location = [lat, lon]
+
+            const flag = getFlagEmoji(s.country_code)
+
+            const marker = L.marker(location)
+
+            marker.bindTooltip(
+                `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
+                {direction:"top"}
+            )
+
+            marker.addTo(markerLayer)
+
+            L.polyline([HQ,location],{
+                color:"#4ea67d",
+                weight:2,
+                opacity:0.7,
+                dashArray:"5,10"
+            }).addTo(markerLayer)
+
+        })
 
     })
 }
