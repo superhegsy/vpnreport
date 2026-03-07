@@ -1,3 +1,5 @@
+(function(){
+
 const HQ = [47.4979, 19.0402]
 
 let map = null
@@ -5,9 +7,7 @@ let markerLayer = null
 
 
 function getFlagEmoji(code){
-
     if(!code) return ""
-
     return code.toUpperCase().replace(/./g,
         c => String.fromCodePoint(127397 + c.charCodeAt())
     )
@@ -18,16 +18,14 @@ function formatDuration(sec){
 
     if(!sec) return "0m"
 
-    const h = Math.floor(sec / 3600)
-    const m = Math.floor((sec % 3600) / 60)
+    const h = Math.floor(sec/3600)
+    const m = Math.floor((sec%3600)/60)
 
-    if(h > 0) return `${h}h ${m}m`
+    if(h>0) return `${h}h ${m}m`
 
     return `${m}m`
 }
 
-
-// ================= MAP =================
 
 function initMap(){
 
@@ -53,116 +51,88 @@ function initMap(){
 
 async function loadVPNLocations(){
 
-    try{
+    const res = await fetch("/api/vpn-locations/")
+    const sessions = await res.json()
 
-        const res = await fetch("/api/vpn-locations/")
-        const sessions = await res.json()
+    markerLayer.clearLayers()
 
-        markerLayer.clearLayers()
+    L.marker(HQ)
+        .addTo(markerLayer)
+        .bindPopup("VPN Gateway (Budapest HQ)")
 
-        L.marker(HQ)
-            .addTo(markerLayer)
-            .bindPopup("VPN Gateway (Budapest HQ)")
+    sessions.forEach(s => {
 
-        sessions.forEach(s => {
+        if(!s.latitude || !s.longitude) return
 
-            if(!s.latitude || !s.longitude) return
+        const location = [s.latitude, s.longitude]
 
-            const location = [s.latitude, s.longitude]
+        const flag = getFlagEmoji(s.country_code)
 
-            const flag = getFlagEmoji(s.country_code)
+        const marker = L.marker(location)
 
-            const marker = L.marker(location)
+        marker.bindTooltip(
+            `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
+            {direction:"top"}
+        )
 
-            marker.bindTooltip(
-                `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
-                {direction:"top"}
-            )
+        marker.addTo(markerLayer)
 
-            marker.addTo(markerLayer)
+        L.polyline([HQ,location],{
+            color:"#4ea67d",
+            weight:2,
+            opacity:0.7,
+            dashArray:"5,10"
+        }).addTo(markerLayer)
 
-            L.polyline([HQ,location],{
-                color:"#4ea67d",
-                weight:2,
-                opacity:0.7,
-                dashArray:"5,10"
-            }).addTo(markerLayer)
-
-        })
-
-    }catch(err){
-        console.warn("Map error",err)
-    }
+    })
 }
 
-
-// ================= VPN TABLE =================
 
 async function refreshVPNSessions(){
 
     const table = document.getElementById("vpn-table")
     if(!table) return
 
-    try{
+    const res = await fetch("/api/active-vpn/")
+    const sessions = await res.json()
 
-        const res = await fetch("/api/active-vpn/")
-        const sessions = await res.json()
+    let html = `
+    <tr>
+    <th>Felhasználó</th>
+    <th>Külső IP</th>
+    <th>Kapcsolódott</th>
+    <th>Duration</th>
+    </tr>
+    `
 
-        let html = `
+    sessions.forEach(s => {
+
+        const flag = getFlagEmoji(s.country_code)
+
+        html += `
         <tr>
-        <th>Felhasználó</th>
-        <th>Külső IP</th>
-        <th>Kapcsolódott</th>
-        <th>Duration</th>
+        <td>${s.username}</td>
+        <td>${flag} ${s.remote_ip}</td>
+        <td>${s.connected_at}</td>
+        <td>${formatDuration(s.duration)}</td>
         </tr>
         `
+    })
 
-        sessions.forEach(s => {
-
-            const flag = getFlagEmoji(s.country_code)
-
-            html += `
-            <tr>
-            <td>${s.username}</td>
-            <td>${flag} ${s.remote_ip}</td>
-            <td>${s.connected_at}</td>
-            <td>${formatDuration(s.duration)}</td>
-            </tr>
-            `
-        })
-
-        table.innerHTML = html
-
-    }catch(err){
-        console.warn("VPN table error",err)
-    }
+    table.innerHTML = html
 }
 
-
-// ================= STATS =================
 
 async function updateDashboardStats(){
 
-    try{
+    const res = await fetch("/api/dashboard-stats/")
+    const data = await res.json()
 
-        const res = await fetch("/api/dashboard-stats/")
-        const data = await res.json()
-
-        const active = document.getElementById("stat-active")
-        const today = document.getElementById("stat-today")
-        const top = document.getElementById("stat-topuser")
-
-        if(active) active.innerText = data.active_users
-        if(today) today.innerText = data.today_sessions
-        if(top) top.innerText = data.top_user
-
-    }catch(err){
-        console.warn("Stats error",err)
-    }
+    document.getElementById("stat-active").innerText = data.active_users
+    document.getElementById("stat-today").innerText = data.today_sessions
+    document.getElementById("stat-topuser").innerText = data.top_user
 }
 
-
-// ================= INIT =================
 
 function init(){
 
@@ -176,4 +146,7 @@ function init(){
     setInterval(loadVPNLocations,10000)
 }
 
+
 document.addEventListener("DOMContentLoaded",init)
+
+})();
