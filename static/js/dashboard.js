@@ -1,6 +1,8 @@
 const HQ = [47.4979, 19.0402]
 
 let map = null
+let markerLayer = null
+
 
 function getFlagEmoji(code){
 
@@ -11,6 +13,7 @@ function getFlagEmoji(code){
     )
 
 }
+
 
 function initMap(){
 
@@ -25,8 +28,10 @@ function initMap(){
         {maxZoom:18}
     ).addTo(map)
 
+    markerLayer = L.layerGroup().addTo(map)
+
     L.marker(HQ)
-        .addTo(map)
+        .addTo(markerLayer)
         .bindPopup("VPN Gateway (Budapest HQ)")
 
     loadVPNLocations()
@@ -34,34 +39,55 @@ function initMap(){
 }
 
 
+
 async function loadVPNLocations(){
 
-    const res = await fetch("/api/vpn-locations/")
-    const sessions = await res.json()
+    try{
 
-    sessions.forEach(s => {
+        const res = await fetch("/api/vpn-locations/")
+        const sessions = await res.json()
 
-        if(!s.latitude || !s.longitude) return
+        if(markerLayer){
+            markerLayer.clearLayers()
+        }
 
-        const location = [s.latitude, s.longitude]
+        L.marker(HQ)
+            .addTo(markerLayer)
+            .bindPopup("VPN Gateway (Budapest HQ)")
 
-        const marker = L.marker(location).addTo(map)
+        sessions.forEach(s => {
 
-        const flag = getFlagEmoji(s.country_code)
+            if(!s.latitude || !s.longitude) return
 
-        marker.bindTooltip(
-            `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
-            {direction:"top"}
-        )
+            const location = [s.latitude, s.longitude]
 
-        L.polyline([HQ,location],{
-            color:"#4ea67d",
-            weight:2,
-            opacity:0.7,
-            dashArray:"5,10"
-        }).addTo(map)
+            const flag = getFlagEmoji(s.country_code)
 
-    })
+            const marker = L.marker(location)
+
+            marker.bindTooltip(
+                `<b>${s.username}</b><br>${flag} ${s.remote_ip}`,
+                {direction:"top"}
+            )
+
+            marker.addTo(markerLayer)
+
+            L.polyline([HQ,location],{
+                color:"#4ea67d",
+                weight:2,
+                opacity:0.7,
+                dashArray:"5,10"
+            }).addTo(markerLayer)
+
+        })
+
+    }
+
+    catch(err){
+
+        console.warn("Map load error",err)
+
+    }
 
 }
 
@@ -71,33 +97,45 @@ async function refreshVPNSessions(){
 
     const table = document.getElementById("vpn-table")
 
-    const res = await fetch("/api/active-vpn/")
-    const sessions = await res.json()
+    if(!table) return
 
-    let html = `
-    <tr>
-    <th>Felhasználó</th>
-    <th>Külső IP</th>
-    <th>Kapcsolódott</th>
-    <th>Duration</th>
-    </tr>
-    `
+    try{
 
-    sessions.forEach(s => {
+        const res = await fetch("/api/active-vpn/")
+        const sessions = await res.json()
 
-        const flag = getFlagEmoji(s.country_code)
-
-        html += `
+        let html = `
         <tr>
-        <td>${s.username}</td>
-        <td>${flag} ${s.remote_ip}</td>
-        <td>${s.connected_at}</td>
-        <td>${s.duration}</td>
+        <th>Felhasználó</th>
+        <th>Külső IP</th>
+        <th>Kapcsolódott</th>
+        <th>Duration</th>
         </tr>
         `
-    })
 
-    table.innerHTML = html
+        sessions.forEach(s => {
+
+            const flag = getFlagEmoji(s.country_code)
+
+            html += `
+            <tr>
+            <td>${s.username}</td>
+            <td>${flag} ${s.remote_ip}</td>
+            <td>${s.connected_at}</td>
+            <td>${s.duration}</td>
+            </tr>
+            `
+        })
+
+        table.innerHTML = html
+
+    }
+
+    catch(err){
+
+        console.warn("VPN table error",err)
+
+    }
 
 }
 
@@ -105,12 +143,22 @@ async function refreshVPNSessions(){
 
 async function updateDashboardStats(){
 
-    const res = await fetch("/api/dashboard-stats/")
-    const data = await res.json()
+    try{
 
-    document.getElementById("stat-active").innerText = data.active_users
-    document.getElementById("stat-today").innerText = data.today_sessions
-    document.getElementById("stat-topuser").innerText = data.top_user
+        const res = await fetch("/api/dashboard-stats/")
+        const data = await res.json()
+
+        document.getElementById("stat-active").innerText = data.active_users
+        document.getElementById("stat-today").innerText = data.today_sessions
+        document.getElementById("stat-topuser").innerText = data.top_user
+
+    }
+
+    catch(err){
+
+        console.warn("Stats update error",err)
+
+    }
 
 }
 
@@ -125,6 +173,7 @@ function init(){
 
     setInterval(updateDashboardStats,5000)
     setInterval(refreshVPNSessions,10000)
+    setInterval(loadVPNLocations,10000)
 
 }
 
