@@ -43,6 +43,7 @@ async function loadVPNLocations(){
 
     markerLayer.clearLayers()
 
+    // HQ marker
     L.marker(HQ)
         .addTo(markerLayer)
         .bindPopup("VPN Gateway (Budapest HQ)")
@@ -127,27 +128,17 @@ async function updateDashboardStats(){
     const res = await fetch("/api/dashboard-stats/")
     const data = await res.json()
 
-    document.getElementById("stat-active").innerText = data.active_users
-    document.getElementById("stat-today").innerText = data.today_sessions
-    document.getElementById("stat-topuser").innerText = data.top_user
+    const active = document.getElementById("stat-active")
+    const today = document.getElementById("stat-today")
+    const top = document.getElementById("stat-topuser")
+
+    if(active) active.innerText = data.active_users
+    if(today) today.innerText = data.today_sessions
+    if(top) top.innerText = data.top_user
 }
 
 
-// ================= INIT =================
-
-function init(){
-
-    initMap()
-
-    updateDashboardStats()
-    refreshVPNSessions()
-
-    setInterval(updateDashboardStats,5000)
-    setInterval(refreshVPNSessions,5000)
-    setInterval(loadVPNLocations,10000)
-}
-
-document.addEventListener("DOMContentLoaded",init)
+// ================= CLOCK =================
 
 function updateClock(){
 
@@ -170,5 +161,21 @@ function updateClock(){
     if(d) d.innerText = date
 }
 
-setInterval(updateClock,1000)
-updateClock()
+
+// ================= INIT =================
+
+function init(){
+
+    initMap()
+
+    updateDashboardStats()
+    refreshVPNSessions()
+    updateClock()
+
+    setInterval(updateDashboardStats,5000)
+    setInterval(refreshVPNSessions,5000)
+    setInterval(loadVPNLocations,10000)
+    setInterval(updateClock,1000)
+}
+
+document.addEventListener("DOMContentLoaded",init)
