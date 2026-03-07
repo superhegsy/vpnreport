@@ -33,7 +33,7 @@ function getFlagEmoji(countryCode) {
 // TÉRKÉP INITIALIZÁLÁS
 // =====================================================
 
-const map = L.map("map").setView(HQ, 7);
+const map = L.map("map").setView(HQ, 6);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18
@@ -49,12 +49,14 @@ L.marker(HQ)
 
 
 // =====================================================
-// VPN USER LOKÁCIÓK
+// VPN USER LOKÁCIÓK + AUTO ZOOM
 // =====================================================
 
 fetch("/api/vpn-locations/")
 .then(res => res.json())
 .then(data => {
+
+    const bounds = [];
 
     data.forEach(session => {
 
@@ -63,11 +65,13 @@ fetch("/api/vpn-locations/")
         const userLocation = [session.lat, session.lon];
         const flag = getFlagEmoji(session.country_code);
 
-        // Marker
+        bounds.push(userLocation);
+
+        // USER MARKER
 
         const marker = L.marker(userLocation).addTo(map);
 
-        // Hover tooltip
+        // HOVER TOOLTIP
 
         marker.bindTooltip(
             `<b>${session.username}</b><br>${flag} ${session.ip}`,
@@ -98,6 +102,20 @@ fetch("/api/vpn-locations/")
         setTimeout(() => map.removeLayer(pulse), 2000);
 
     });
+
+    // =====================================================
+    // AUTOMATIKUS ZOOM A USEREKRE
+    // =====================================================
+
+    if (bounds.length > 0) {
+
+        bounds.push(HQ);
+
+        map.fitBounds(bounds, {
+            padding: [80, 80]
+        });
+
+    }
 
 });
 
