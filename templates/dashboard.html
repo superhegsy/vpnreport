@@ -5,45 +5,44 @@
 
 <h2>VPN Dashboard</h2>
 
+<!-- ======================
+     STAT CARDS
+====================== -->
+
 <div class="stats">
 
-<div class="stat">
-<h3>Aktív VPN user</h3>
-<h1 id="stat-active">{{ active_users }}</h1>
-</div>
+    <div class="stat">
+        <h3>Aktív VPN user</h3>
+        <h1 id="stat-active">{{ active_users }}</h1>
+    </div>
 
-<div class="stat">
-<h3>Mai VPN session</h3>
-<h1 id="stat-today">{{ today_sessions }}</h1>
-</div>
+    <div class="stat">
+        <h3>Mai VPN session</h3>
+        <h1 id="stat-today">{{ today_sessions }}</h1>
+    </div>
 
-<div class="stat">
-<h3>Összes VPN session</h3>
-<h1 id="stat-total">{{ total_sessions }}</h1>
-</div>
+    <div class="stat">
+        <h3>Összes VPN session</h3>
+        <h1 id="stat-total">{{ total_sessions }}</h1>
+    </div>
 
-<div class="stat">
-<h3>Top VPN user</h3>
-<h1 id="stat-topuser">
-{% if top_user %}
-{{ top_user.username }}
-{% else %}
--
-{% endif %}
-</h1>
-</div>
-
-</div>
-
-
-<div class="panel">
-
-<h4>VPN kapcsolatok térképen</h4>
-
-<div id="map" style="height:650px;"></div>
+    <div class="stat">
+        <h3>Top VPN user</h3>
+        <h1 id="stat-topuser">
+            {% if top_user %}
+                {{ top_user.username }}
+            {% else %}
+                -
+            {% endif %}
+        </h1>
+    </div>
 
 </div>
 
+
+<!-- ======================
+     ACTIVE VPN SESSIONS
+====================== -->
 
 <div class="panel">
 
@@ -59,6 +58,7 @@
 </tr>
 
 {% for s in sessions %}
+
 <tr>
 
 <td>{{ s.username }}</td>
@@ -75,6 +75,7 @@
 </td>
 
 </tr>
+
 {% empty %}
 
 <tr>
@@ -88,6 +89,24 @@ Nincs aktív VPN kapcsolat
 </table>
 
 </div>
+
+
+<!-- ======================
+     VPN MAP
+====================== -->
+
+<div class="panel">
+
+<h4>VPN kapcsolatok térképen</h4>
+
+<div id="map" style="height:650px;"></div>
+
+</div>
+
+
+<!-- ======================
+     NOTIFICATIONS
+====================== -->
 
 <div id="vpn-toast-container"></div>
 
