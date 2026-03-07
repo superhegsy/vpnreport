@@ -61,11 +61,8 @@ font-size:11px;
 <body>
 
 <div class="header">
-
 {{ title }}
-
 </div>
-
 
 <table>
 
@@ -87,26 +84,7 @@ font-size:11px;
 
 <td>{{ u.total_sessions }}</td>
 
-<td>
-
-{% if u.total_duration %}
-
-{% with sec=u.total_duration %}
-
-{% widthratio sec 3600 1 as hours %}
-{% widthratio sec 60 1 as minutes %}
-
-{{ hours }}h {{ minutes|add:"-"|add:hours|add:"*60" }}m
-
-{% endwith %}
-
-{% else %}
-
-0m
-
-{% endif %}
-
-</td>
+<td>{{ u.duration }}</td>
 
 </tr>
 
@@ -115,7 +93,6 @@ font-size:11px;
 </tbody>
 
 </table>
-
 
 <div class="footer">
 

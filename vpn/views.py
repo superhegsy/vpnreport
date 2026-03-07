@@ -16,13 +16,17 @@ from app.models import VPNSession
 # ======================================================
 
 def format_duration(seconds):
+
     if not seconds:
-        return "0h 0m"
+        return "0m"
 
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
 
-    return f"{hours}h {minutes}m"
+    if hours > 0:
+        return f"{hours}h {minutes}m"
+
+    return f"{minutes}m"
 
 
 def get_report_queryset(period):
@@ -30,27 +34,34 @@ def get_report_queryset(period):
     now = timezone.now()
 
     if period == "daily":
+
         sessions = VPNSession.objects.filter(
             connected_at__date=now.date(),
             disconnected_at__isnull=False
         )
+
         title = "Napi VPN riport"
 
     elif period == "weekly":
+
         sessions = VPNSession.objects.filter(
             connected_at__gte=now - timedelta(days=7),
             disconnected_at__isnull=False
         )
+
         title = "Heti VPN riport"
 
     elif period == "monthly":
+
         sessions = VPNSession.objects.filter(
             connected_at__gte=now - timedelta(days=30),
             disconnected_at__isnull=False
         )
+
         title = "Havi VPN riport"
 
     else:
+
         sessions = VPNSession.objects.none()
         title = "VPN riport"
 
@@ -84,13 +95,7 @@ def dashboard(request):
         delta = now - s.connected_at
         seconds = int(delta.total_seconds())
 
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-
-        if hours > 0:
-            s.duration = f"{hours}h {minutes}m"
-        else:
-            s.duration = f"{minutes}m"
+        s.duration = format_duration(seconds)
 
     active_users = active_sessions.count()
 
@@ -211,10 +216,7 @@ def active_vpn_sessions(request):
         delta = now - s.connected_at
         seconds = int(delta.total_seconds())
 
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-
-        duration = f"{hours}h {minutes}m" if hours else f"{minutes}m"
+        duration = format_duration(seconds)
 
         data.append({
             "username": s.username,
@@ -304,14 +306,16 @@ def live_dashboard(request):
     for s in active_sessions:
 
         delta = now - s.connected_at
-        minutes = int(delta.total_seconds() / 60)
+        seconds = int(delta.total_seconds())
+
+        duration = format_duration(seconds)
 
         data.append({
             "username": s.username,
             "ip": s.remote_ip,
             "country": s.country_code,
             "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
-            "duration": f"{minutes}m",
+            "duration": duration,
             "lat": s.latitude,
             "lon": s.longitude
         })
@@ -330,10 +334,23 @@ def report_pdf(request, period):
 
     users, title = get_report_queryset(period)
 
+    users_list = []
+
+    for u in users:
+
+        seconds = u["total_duration"] or 0
+        duration = format_duration(seconds)
+
+        users_list.append({
+            "username": u["username"],
+            "total_sessions": u["total_sessions"],
+            "duration": duration
+        })
+
     template = get_template("report_pdf.html")
 
     html = template.render({
-        "users": users,
+        "users": users_list,
         "title": title,
         "now": timezone.now()
     })
