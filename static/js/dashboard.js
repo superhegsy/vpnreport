@@ -148,3 +148,27 @@ function init(){
 }
 
 document.addEventListener("DOMContentLoaded",init)
+
+function updateClock(){
+
+    const now = new Date()
+
+    const time =
+        String(now.getHours()).padStart(2,"0")+":"+
+        String(now.getMinutes()).padStart(2,"0")+":"+
+        String(now.getSeconds()).padStart(2,"0")
+
+    const date =
+        now.getFullYear()+"."+
+        String(now.getMonth()+1).padStart(2,"0")+"."+
+        String(now.getDate()).padStart(2,"0")
+
+    const t = document.getElementById("clock-time")
+    const d = document.getElementById("clock-date")
+
+    if(t) t.innerText = time
+    if(d) d.innerText = date
+}
+
+setInterval(updateClock,1000)
+updateClock()
