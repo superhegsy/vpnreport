@@ -10,6 +10,11 @@ from xhtml2pdf import pisa
 
 from .models import VPNSession
 
+
+# ======================================================
+# HELPER
+# ======================================================
+
 def format_duration(seconds):
 
     if not seconds:
@@ -19,6 +24,7 @@ def format_duration(seconds):
     minutes = (seconds % 3600) // 60
 
     return f"{hours}h {minutes}m"
+
 
 # ======================================================
 # DASHBOARD
@@ -44,13 +50,19 @@ def dashboard(request):
         else:
             s.duration = f"{minutes}m"
 
+    # =========================
+    # STATISZTIKA
+    # =========================
+
     active_users = active_sessions.count()
 
     today_sessions = VPNSession.objects.filter(
         connected_at__date=timezone.now().date()
     ).count()
 
-    total_sessions = VPNSession.objects.count()
+    week_sessions = VPNSession.objects.filter(
+        connected_at__gte=timezone.now() - timedelta(days=7)
+    ).count()
 
     top_user = (
         VPNSession.objects
@@ -64,7 +76,7 @@ def dashboard(request):
         "sessions": active_sessions,
         "active_users": active_users,
         "today_sessions": today_sessions,
-        "total_sessions": total_sessions,
+        "week_sessions": week_sessions,
         "top_user": top_user
     }
 
@@ -124,7 +136,9 @@ def dashboard_stats(request):
         connected_at__date=timezone.now().date()
     ).count()
 
-    total_sessions = VPNSession.objects.count()
+    week_sessions = VPNSession.objects.filter(
+        connected_at__gte=timezone.now() - timedelta(days=7)
+    ).count()
 
     top_user = (
         VPNSession.objects
@@ -137,7 +151,7 @@ def dashboard_stats(request):
     return JsonResponse({
         "active_users": active_users,
         "today_sessions": today_sessions,
-        "total_sessions": total_sessions,
+        "week_sessions": week_sessions,
         "top_user": top_user["username"] if top_user else "-"
     })
 
@@ -153,12 +167,12 @@ def active_vpn_sessions(request):
     ).order_by("-connected_at")
 
     data = []
-
     now = timezone.now()
 
     for s in sessions:
 
         delta = now - s.connected_at
+
         hours = delta.seconds // 3600
         minutes = (delta.seconds % 3600) // 60
 
@@ -287,6 +301,7 @@ def user_history(request, username):
 # ======================================================
 
 def report_pdf(request, period):
+
     period_hu = {
         "daily": "Napi",
         "weekly": "Heti",
@@ -324,18 +339,8 @@ def report_pdf(request, period):
 
         sessions = VPNSession.objects.none()
 
-
-    # =========================
-    # SESSION DURATION FORMAT
-    # =========================
-
     for s in sessions:
         s.duration = format_duration(s.duration_seconds)
-
-
-    # =========================
-    # USER SUMMARY
-    # =========================
 
     user_summary = (
         sessions
@@ -350,17 +355,7 @@ def report_pdf(request, period):
     for u in user_summary:
         u["duration"] = format_duration(u["total_duration"])
 
-
-    # =========================
-    # TOP USER
-    # =========================
-
     top_user = user_summary[0]["username"] if user_summary else "-"
-
-
-    # =========================
-    # PDF TEMPLATE
-    # =========================
 
     template = get_template("report_pdf.html")
 
