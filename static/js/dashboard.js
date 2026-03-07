@@ -1,15 +1,11 @@
 // =====================================================
-// VPN DASHBOARD SCRIPT (PRODUCTION STABLE)
+// VPN DASHBOARD SCRIPT (STABLE VERSION)
 // =====================================================
 
 
 // ================= CONFIG =================
 
 const HQ = [47.4979, 19.0402]
-
-const MAP_ZOOM_DEFAULT = 6
-const MAP_ZOOM_SINGLE = 7
-const MAP_ZOOM_MULTI = 6
 
 let map = null
 let knownUsers = new Set()
@@ -77,7 +73,7 @@ function initMap() {
 
     if (!mapElement) return
 
-    map = L.map("map").setView(HQ, MAP_ZOOM_DEFAULT)
+    map = L.map("map").setView(HQ, 6)
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -100,9 +96,6 @@ async function loadVPNLocations() {
         const res = await fetch("/api/vpn-locations/")
         const sessions = await res.json()
 
-        const bounds = []
-        const users = []
-
         sessions.forEach(session => {
 
             if (!session.lat || !session.lon) return
@@ -110,18 +103,11 @@ async function loadVPNLocations() {
             const location = [session.lat, session.lon]
             const flag = getFlagEmoji(session.country_code)
 
-            users.push(location)
-            bounds.push(location)
-
             const marker = L.marker(location).addTo(map)
 
             marker.bindTooltip(
                 `<b>${session.username}</b><br>${flag}${session.ip}`,
-                {
-                    direction: "top",
-                    offset: [0, -10],
-                    opacity: 0.9
-                }
+                { direction: "top" }
             )
 
             L.polyline([HQ, location], {
@@ -131,67 +117,15 @@ async function loadVPNLocations() {
                 dashArray: "5,10"
             }).addTo(map)
 
-            pulse(location)
-
         })
-
-        applyZoom(users, bounds)
 
     }
 
     catch (err) {
 
-        console.error("VPN map error:", err)
+        console.warn("Map load skipped", err)
 
     }
-
-}
-
-
-function applyZoom(users, bounds) {
-
-    if (!map) return
-
-    if (users.length === 1) {
-
-        map.fitBounds([HQ, users[0]], {
-            padding: [120, 120],
-            maxZoom: MAP_ZOOM_SINGLE
-        })
-
-    }
-
-    else if (users.length > 1) {
-
-        bounds.push(HQ)
-
-        map.fitBounds(bounds, {
-            padding: [80, 80],
-            maxZoom: MAP_ZOOM_MULTI
-        })
-
-    }
-
-}
-
-
-function pulse(location) {
-
-    if (!map) return
-
-    const pulse = L.circle(location, {
-        radius: 30000,
-        color: "#d7a300",
-        fillOpacity: 0.3
-    }).addTo(map)
-
-    setTimeout(() => {
-
-        if (map && map.hasLayer(pulse)) {
-            map.removeLayer(pulse)
-        }
-
-    }, 2000)
 
 }
 
@@ -213,7 +147,7 @@ async function updateDashboardStats() {
 
     catch (err) {
 
-        console.error("Dashboard stats error:", err)
+        console.warn("Stats update error", err)
 
     }
 
@@ -224,14 +158,14 @@ async function updateDashboardStats() {
 
 async function refreshVPNSessions() {
 
+    const table = document.getElementById("vpn-table")
+
+    if (!table) return
+
     try {
 
         const res = await fetch("/api/active-vpn/")
         const sessions = await res.json()
-
-        const table = document.getElementById("vpn-table")
-
-        if (!table) return
 
         let html = `
         <tr>
@@ -266,7 +200,7 @@ async function refreshVPNSessions() {
 
     catch (err) {
 
-        console.error("VPN table error:", err)
+        console.warn("VPN table error", err)
 
     }
 
@@ -287,7 +221,6 @@ async function checkNewVPNUsers() {
             if (!knownUsers.has(session.username)) {
 
                 knownUsers.add(session.username)
-
                 showVPNToast(session)
 
             }
@@ -296,11 +229,7 @@ async function checkNewVPNUsers() {
 
     }
 
-    catch (err) {
-
-        console.error("VPN alert error:", err)
-
-    }
+    catch {}
 
 }
 
@@ -383,7 +312,17 @@ function updateClock() {
 
 function init() {
 
-    initMap()
+    try {
+
+        if (document.getElementById("map")) {
+            initMap()
+        }
+
+    } catch (e) {
+
+        console.warn("Map init skipped")
+
+    }
 
     updateDashboardStats()
     refreshVPNSessions()
