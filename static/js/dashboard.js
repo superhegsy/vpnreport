@@ -324,7 +324,7 @@ function updateClock() {
 
     setText("clock-time", time)
     setText("clock-date", date)
-    setText("clock-day", day)
+
 
 }
 
