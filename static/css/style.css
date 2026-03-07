@@ -312,4 +312,33 @@ transition:0.2s;
 background:#3d8f69;
 }
 
+/* =========================
+   REPORT PAGE
+========================= */
+
+.report-header h2{
+margin:0 0 10px 0;
+font-size:22px;
+font-weight:600;
+}
+
+.report-actions{
+margin-bottom:20px;
+}
+
+.report-table td{
+vertical-align:middle;
+}
+
+.session-cell,
+.duration-cell{
+text-align:center;
+}
+
+.empty-row td{
+text-align:center;
+padding:25px;
+color:#777;
+}
+
 
