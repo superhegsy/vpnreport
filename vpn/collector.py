@@ -4,7 +4,7 @@ import geoip2.database
 import os
 
 from django.utils import timezone
-from .models import FortiGateConfig, VPNSession
+from app.models import FortiGateConfig, VPNSession
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

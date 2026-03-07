@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import VPNSession, FortiGateConfig
+from app.models import VPNSession, FortiGateConfig
 
 
 admin.site.register(VPNSession)

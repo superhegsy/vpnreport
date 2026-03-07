@@ -27,6 +27,7 @@ class VPNSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = "vpn"
 
         indexes = [
             models.Index(fields=["username"]),
@@ -67,6 +68,9 @@ class FortiGateConfig(models.Model):
     enabled = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "vpn"
 
     def __str__(self):
         return self.name

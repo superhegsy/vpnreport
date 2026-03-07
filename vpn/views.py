@@ -8,7 +8,7 @@ from django.template.loader import get_template
 from datetime import timedelta
 from xhtml2pdf import pisa
 
-from .models import VPNSession
+from app.models import VPNSession
 
 
 # ======================================================
