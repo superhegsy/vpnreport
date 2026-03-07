@@ -1,32 +1,73 @@
-{% extends "base.html" %}
-{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
 
-{% block content %}
+<style>
 
-<div class="report-header">
-    <h2>{{ title }}</h2>
+body{
+font-family: Arial, Helvetica, sans-serif;
+font-size:12px;
+margin:0;
+padding:30px;
+}
+
+.header{
+background:#f4c300;
+padding:14px;
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th, td{
+padding:8px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#4ea67d;
+color:white;
+text-align:left;
+}
+
+tr:nth-child(even){
+background:#f5f5f5;
+}
+
+.footer{
+margin-top:30px;
+background:#4ea67d;
+color:white;
+padding:10px;
+font-size:11px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+{{ title }}
 </div>
 
 
-<div class="report-actions">
-    <a href="/report/pdf/{{ period }}/" class="menu-btn">
-        PDF letöltése
-    </a>
-</div>
-
-
-<div class="panel">
-
-<table class="report-table">
+<table>
 
 <thead>
 <tr>
-    <th>Felhasználó</th>
-    <th>Session</th>
-    <th>Összes VPN idő</th>
+<th>Felhasznalo</th>
+<th>Session</th>
+<th>Osszes VPN ido</th>
 </tr>
 </thead>
-
 
 <tbody>
 
@@ -34,28 +75,10 @@
 
 <tr>
 
-<td class="user-cell">
-    <a href="{% url 'user_history' u.username %}">
-        {{ u.username }}
-    </a>
-</td>
+<td>{{ u.username }}</td>
+<td>{{ u.total_sessions }}</td>
+<td>{{ u.duration }}</td>
 
-<td class="session-cell">
-    {{ u.total_sessions }}
-</td>
-
-<td class="duration-cell">
-    {{ u.duration }}
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr class="empty-row">
-<td colspan="3">
-    Nincs adat
-</td>
 </tr>
 
 {% endfor %}
@@ -64,6 +87,13 @@
 
 </table>
 
+
+<div class="footer">
+
+JGK VPN riport rendszer
+Generalva: {{ now|date:"Y.m.d H:i" }}
+
 </div>
 
-{% endblock %}
+</body>
+</html>

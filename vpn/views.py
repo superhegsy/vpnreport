@@ -29,6 +29,10 @@ def format_duration(seconds):
     return f"{minutes}m"
 
 
+# ======================================================
+# REPORT DATA
+# ======================================================
+
 def get_report_queryset(period):
 
     now = timezone.now()
@@ -75,7 +79,6 @@ def get_report_queryset(period):
         .order_by("-total_duration")
     )
 
-    # idő formázás minden riportnál
     users_list = []
 
     for u in users:
@@ -139,106 +142,6 @@ def dashboard(request):
 
 
 # ======================================================
-# API - VPN LOCATIONS
-# ======================================================
-
-def vpn_locations(request):
-
-    sessions = VPNSession.objects.filter(
-        disconnected_at__isnull=True
-    )
-
-    data = []
-
-    for s in sessions:
-
-        if not s.latitude or not s.longitude:
-            continue
-
-        data.append({
-            "username": s.username,
-            "ip": s.remote_ip,
-            "lat": s.latitude,
-            "lon": s.longitude,
-            "country": s.country,
-            "country_code": s.country_code
-        })
-
-    return JsonResponse(data, safe=False)
-
-
-# ======================================================
-# API - DASHBOARD STATS
-# ======================================================
-
-def dashboard_stats(request):
-
-    now = timezone.now()
-
-    top_user = (
-        VPNSession.objects
-        .values("username")
-        .annotate(total=Count("id"))
-        .order_by("-total")
-        .first()
-    )
-
-    return JsonResponse({
-
-        "active_users": VPNSession.objects.filter(
-            disconnected_at__isnull=True
-        ).count(),
-
-        "today_sessions": VPNSession.objects.filter(
-            connected_at__date=now.date()
-        ).count(),
-
-        "week_sessions": VPNSession.objects.filter(
-            connected_at__gte=now - timedelta(days=7)
-        ).count(),
-
-        "total_sessions": VPNSession.objects.count(),
-
-        "top_user": top_user["username"] if top_user else "-"
-    })
-
-
-# ======================================================
-# API - ACTIVE VPN SESSIONS
-# ======================================================
-
-def active_vpn_sessions(request):
-
-    sessions = VPNSession.objects.filter(
-        disconnected_at__isnull=True
-    ).order_by("-connected_at")
-
-    now = timezone.now()
-
-    data = []
-
-    for s in sessions:
-
-        delta = now - s.connected_at
-        seconds = int(delta.total_seconds())
-
-        data.append({
-
-            "username": s.username,
-            "ip": s.remote_ip,
-            "country_code": s.country_code,
-
-            "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
-            "connected_at_iso": s.connected_at.isoformat(),
-
-            "duration": format_duration(seconds)
-
-        })
-
-    return JsonResponse(data, safe=False)
-
-
-# ======================================================
 # REPORT PAGES
 # ======================================================
 
@@ -276,71 +179,6 @@ def report_monthly(request):
 
 
 # ======================================================
-# USER HISTORY
-# ======================================================
-
-def user_history(request, username):
-
-    sessions = VPNSession.objects.filter(
-        username=username,
-        disconnected_at__isnull=False
-    ).order_by("-connected_at")
-
-    paginator = Paginator(sessions, 50)
-
-    page_number = request.GET.get("page")
-
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, "user_history.html", {
-        "username": username,
-        "sessions": page_obj
-    })
-
-
-# ======================================================
-# LIVE DASHBOARD API
-# ======================================================
-
-def live_dashboard(request):
-
-    active_sessions = VPNSession.objects.filter(
-        disconnected_at__isnull=True
-    )
-
-    now = timezone.now()
-
-    data = []
-
-    for s in active_sessions:
-
-        delta = now - s.connected_at
-        seconds = int(delta.total_seconds())
-
-        data.append({
-
-            "username": s.username,
-            "ip": s.remote_ip,
-            "country": s.country_code,
-
-            "connected_at": s.connected_at.strftime("%Y.%m.%d %H:%M:%S"),
-
-            "duration": format_duration(seconds),
-
-            "lat": s.latitude,
-            "lon": s.longitude
-        })
-
-    return JsonResponse({
-
-        "active_users": active_sessions.count(),
-
-        "sessions": data
-
-    })
-
-
-# ======================================================
 # PDF REPORT
 # ======================================================
 
@@ -351,13 +189,9 @@ def report_pdf(request, period):
     template = get_template("report_pdf.html")
 
     html = template.render({
-
         "users": users,
-
         "title": title,
-
         "now": timezone.now()
-
     })
 
     response = HttpResponse(content_type="application/pdf")
