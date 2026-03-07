@@ -9,6 +9,7 @@ body{
 font-family: Arial, Helvetica, sans-serif;
 font-size:12px;
 margin:0;
+padding:30px;
 color:#000;
 }
 
@@ -16,9 +17,10 @@ color:#000;
 
 .header{
 background:#f4c300;
-padding:14px;
+padding:12px;
 font-size:20px;
 font-weight:bold;
+margin-bottom:20px;
 }
 
 /* TABLE */
@@ -26,18 +28,34 @@ font-weight:bold;
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:15px;
+table-layout:fixed;
 }
 
 th, td{
 padding:8px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 th{
 background:#4ea67d;
 color:white;
+text-align:left;
+}
+
+/* column widths */
+
+.col-user{
+width:50%;
+}
+
+.col-session{
+width:20%;
+text-align:center;
+}
+
+.col-duration{
+width:30%;
+text-align:center;
 }
 
 tr:nth-child(even){
@@ -47,7 +65,7 @@ background:#f5f5f5;
 /* FOOTER */
 
 .footer{
-margin-top:25px;
+margin-top:30px;
 background:#4ea67d;
 color:white;
 padding:10px;
@@ -68,9 +86,9 @@ font-size:11px;
 
 <thead>
 <tr>
-<th>Felhasznalo</th>
-<th>Session</th>
-<th>Osszes VPN ido</th>
+<th class="col-user">Felhasznalo</th>
+<th class="col-session">Session</th>
+<th class="col-duration">Osszes VPN ido</th>
 </tr>
 </thead>
 
@@ -80,11 +98,17 @@ font-size:11px;
 
 <tr>
 
-<td>{{ u.username }}</td>
+<td class="col-user">
+{{ u.username }}
+</td>
 
-<td>{{ u.total_sessions }}</td>
+<td class="col-session">
+{{ u.total_sessions }}
+</td>
 
-<td>{{ u.duration }}</td>
+<td class="col-duration">
+{{ u.duration }}
+</td>
 
 </tr>
 
